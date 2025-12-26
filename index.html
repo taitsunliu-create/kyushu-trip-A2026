@@ -4280,15 +4280,21 @@ function resetShareButton(btn) {
              speechSynthesis.speak(utterance);
         }
 
-        // Voice Recognition Logic
+       // Voice Recognition Logic
+        // [修正] 將 recognition 移出函式，避免重複宣告
+        let recognition = null; 
+
         function setupVoiceButton() {
+            // [修正] 如果已經初始化過，就直接結束，防止重複綁定事件
+            if (recognition) return; 
+
             const voiceBtn = document.getElementById('btn-voice-ja');
             if (!voiceBtn) return;
             
             // 防止長按跳出選單
             voiceBtn.oncontextmenu = (e) => { e.preventDefault(); return false; };
 
-            let recognition;
+            // let recognition; <--- [修正] 這行刪除，改用上面的全域變數
             
             // 檢查瀏覽器支援度
             if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
