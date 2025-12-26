@@ -4285,77 +4285,105 @@ function resetShareButton(btn) {
             const voiceBtn = document.getElementById('btn-voice-ja');
             if (!voiceBtn) return;
             
-            voiceBtn.oncontextmenu = function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                return false;
-            };
+            // 防止長按跳出選單
+            voiceBtn.oncontextmenu = (e) => { e.preventDefault(); return false; };
 
             let recognition;
             
-            if ('webkitSpeechRecognition' in window) {
-                recognition = new webkitSpeechRecognition();
-                // 關鍵修正：不再自動偵測，而是讀取使用者的選擇
-                recognition.continuous = false;
-                recognition.interimResults = false;
+            // 檢查瀏覽器支援度
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                
+                // 設定連續模式：讓 iOS 不會講一句話就自己斷線，而是由我們程式控制何時斷
+                recognition.continuous = true;
+                recognition.interimResults = true;
 
+                // --- [關鍵修正 1] 設定語言與 UI 狀態 (onstart) ---
                 recognition.onstart = function() {
-                    // 在開始時動態設定語言
-                    const selectedLang = document.querySelector('input[name="voice_lang"]:checked').value;
-                    recognition.lang = selectedLang;
-                    
                     voiceBtn.classList.add('recording');
+                    
+                    // 取得當前選擇的語言名稱，更新按鈕文字
+                    const selectedLang = document.querySelector('input[name="voice_lang"]:checked').value;
                     const langText = selectedLang === 'zh-TW' ? '中文' : '日文';
-                    voiceBtn.innerHTML = `🔴 聽${langText}中...`;
-                    document.getElementById('ai-user-input').placeholder = `正在聆聽${langText}...`;
+                    
+                    voiceBtn.innerHTML = `<span style="animation: pulse 1s infinite;">🔴 聆聽${langText}...</span>`;
+                    document.getElementById('ai-user-input').placeholder = `正在聆聽${langText} (說完自動停止)...`;
                 };
 
+                // --- [關鍵修正 2] 結束時重置按鈕 (onend) ---
                 recognition.onend = function() {
                     voiceBtn.classList.remove('recording');
                     voiceBtn.innerHTML = `
-                        <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;margin-bottom:2px;"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                        <svg class="icon-sprite"><use href="#icon-voice"></use></svg>
                         語音輸入
                     `;
                     updatePlaceholder();
                 };
 
-                recognition.onresult = function(event) {
-                    const transcript = event.results[0][0].transcript;
-                    document.getElementById('ai-user-input').value = transcript;
-                    sendToGemini('voice_auto');
-                };
-                
-                // Error handling for "no-speech" or "language mismatch"
+                // --- [關鍵修正 3] 錯誤處理 (onerror) ---
+                // 過濾掉 iPhone 常見的良性錯誤，不再跳出煩人的 Alert
                 recognition.onerror = function(event) {
                     console.log('Voice Error:', event.error);
+                    
+                    // 忽略 "no-speech" (沒聽到聲音) 和 "aborted" (手動停止)
+                    if (event.error === 'no-speech' || event.error === 'aborted') {
+                        // 靜默失敗，只移除錄音狀態，不擾民
+                        voiceBtn.classList.remove('recording');
+                        return;
+                    }
+                    
+                    // 只有真正的錯誤才跳通知
                     voiceBtn.classList.remove('recording');
-                    voiceBtn.innerHTML = `
-                        <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;margin-bottom:2px;"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-                        重試
-                    `;
+                    alert("語音連線中斷，請重新點擊按鈕。");
                 };
 
-                // [修改] 改為「開關式」邏輯：錄音中點擊則停止，未錄音點擊則開始
-                const toggleRec = (e) => {
+                // --- [核心邏輯] 處理辨識結果 (onresult) ---
+                recognition.onresult = function(event) {
+                    let finalTranscript = '';
+                    
+                    // 組合所有已確認的片段
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        if (event.results[i].isFinal) {
+                            finalTranscript += event.results[i][0].transcript;
+                        }
+                    }
+
+                    // 如果有偵測到完整的句子
+                    if (finalTranscript.trim().length > 0) {
+                        recognition.stop(); // 1. 聽到這句話就立刻停止錄音
+                        
+                        // 2. 填入輸入框顯示給使用者看
+                        document.getElementById('ai-user-input').value = finalTranscript;
+                        
+                        // 3. 直接發送給 AI 進行翻譯
+                        sendToGemini('voice_direct'); 
+                    }
+                };
+
+                // --- [關鍵修正 4] 按鈕點擊事件 ---
+                voiceBtn.onclick = (e) => {
                     if (e && e.cancelable) e.preventDefault();
                     
-                    // 檢查按鈕是否有 'recording' 類別 (表示正在錄音)
                     if (voiceBtn.classList.contains('recording')) {
-                        console.log('手動停止錄音');
-                        try { recognition.stop(); } catch(err) {}
-                        // 這裡不呼叫 start，讓它自然停止，麥克風權限就會釋放
+                        // 如果正在錄音，按一下則停止
+                        recognition.stop();
                     } else {
-                        console.log('手動開始錄音');
-                        try { recognition.start(); } catch(err) { console.log(err); }
+                        // ★★★ 修正重點：在 start() 之前設定語言！ ★★★
+                        const selectedLang = document.querySelector('input[name="voice_lang"]:checked').value;
+                        recognition.lang = selectedLang; 
+                        
+                        try {
+                            recognition.start();
+                        } catch (err) {
+                            console.error("啟動失敗:", err);
+                        }
                     }
                 };
                 
-                // 綁定新的開關函式
-                voiceBtn.onclick = toggleRec;
-                
             } else {
                 voiceBtn.style.display = 'none'; 
-                console.log('Web Speech API not supported');
+                alert('您的瀏覽器不支援語音輸入功能');
             }
         }
 
@@ -4398,80 +4426,60 @@ function resetShareButton(btn) {
             const text = aiInput.value.trim();
             if (!text) return;
 
+            // 顯示使用者的話
             appendMessage('user', text);
             aiInput.value = ''; 
 
             let finalPrompt = "";
+            
+            // 取得目前選擇的語言
+            const selectedLang = document.querySelector('input[name="voice_lang"]:checked').value;
+            const isInputZh = selectedLang === 'zh-TW';
 
-            // --- 模式 A: 行程諮詢 (Consult) ---
+            // --- 模式 A: 行程諮詢 ---
             if (mode === 'consult' || mode === 'auto') {
-                
-                // 1. 讀取快取中的「我的位置、天氣與時區」
-                let liveContext = "";
+                 let liveContext = "";
                 if (window.appCache && window.appCache['my_location_combined']) {
                     const d = window.appCache['my_location_combined'].data;
-                    const weatherDesc = typeof getWeatherDescText === 'function' ? getWeatherDescText(d.code) : '';
-                    
-                    // [新增] 根據儲存的時區，計算「現在」的當地時間
-                    let localTimeStr = "未知";
-                    if (d.timezone) {
-                        try {
-                            // 使用 Intl API 轉換時間，確保不受手機系統時間影響
-                            localTimeStr = new Date().toLocaleString('zh-TW', { 
-                                timeZone: d.timezone, 
-                                hour12: false,
-                                year: 'numeric', month: '2-digit', day: '2-digit', 
-                                hour: '2-digit', minute: '2-digit'
-                            });
-                        } catch (e) { console.error("時間轉換錯誤", e); }
-                    }
-
-                    liveContext = `
-                    【使用者當下情境】
-                    - 目前位置：${d.city}
-                    - 當地時間：${localTimeStr} (時區: ${d.timezone || '自動偵測'})
-                    - 當地天氣：${weatherDesc} (氣溫 ${d.temp}°C)
-                    `;
+                    liveContext = `目前位置：${d.city}, 天氣：${d.code}, 氣溫：${d.temp}°C`;
                 }
-
-                // 2. 組合歷史紀錄
-                const historyText = conversationHistory.length > 0 
-                    ? `【之前的對話紀錄】\n${conversationHistory.join('\n')}\n`
-                    : "";
-
+                const historyText = conversationHistory.join('\n');
+                
                 finalPrompt = `
                     ${systemPrompt}
                     ${liveContext}
                     ${historyText}
-                    
-                    【使用者目前的問題】： "${text}"
-                    (請根據行程記憶、當下情境以及對話紀錄，提供簡潔、像導遊般的建議。)
+                    【使用者問題】： "${text}"
                 `;
             } 
-            // --- 模式 B: 翻譯 (Translate) ---
+            // --- 模式 B: 手動按翻譯按鈕 ---
             else if (mode === 'translate') {
                 finalPrompt = `
-                    你是一個中日雙向翻譯機。
-                    【使用者輸入】： "${text}"
-                    任務：
-                    1. 若輸入是中文 -> 請翻成日文 (禮貌形)。★務必在下方附上羅馬拼音 (Romaji)。
-                    2. 若輸入是日文 -> 請翻成繁體中文。★不需要羅馬拼音。
-                    
-                    注意：只輸出翻譯結果，不要解釋。
+                    Role: Professional JP/TW Translator.
+                    Input: "${text}"
+                    Rules:
+                    1. If input is Chinese -> Translate to Japanese (Polite). Add Pronunciation.
+                    2. If input is Japanese -> Translate to Traditional Chinese.
+                    Output: Translation result ONLY.
                 `;
             }
-            // --- 模式 C: 語音 (Voice) ---
-            else if (mode === 'voice_auto') {
-                 const selectedLang = document.querySelector('input[name="voice_lang"]:checked').value;
-                 const isInputZh = selectedLang === 'zh-TW';
-                 
-                 finalPrompt = `
-                    你是一個口譯員。
-                    輸入語言：${isInputZh ? '中文' : '日文'}
-                    內容： "${text}"
-                    任務：${isInputZh ? '翻成日文(附Romaji)' : '翻成繁體中文(免拼音)'}。
-                    注意：只輸出翻譯結果。
-                 `;
+            // --- 模式 C: 語音直達翻譯 (Voice Direct) ---
+            else if (mode === 'voice_direct') {
+                 if (isInputZh) {
+                     // 使用者說中文 -> 翻成日文給店員聽
+                     finalPrompt = `
+                        Task: Translate this Traditional Chinese text to Japanese (Polite form).
+                        Input: "${text}"
+                        Output: ONLY the Japanese translation text. NO Romaji. NO explanations.
+                     `;
+                 } else {
+                     // 使用者(或店員)說日文 -> 翻成中文給自己看
+                     finalPrompt = `
+                        Task: Translate this Japanese text to Traditional Chinese (Taiwan).
+                        Input: "${text}"
+                        Output: ONLY the Chinese translation. NO English. NO Romanization.
+                     `;
+                 }
             }
 
             showLoading();
@@ -4479,21 +4487,28 @@ function resetShareButton(btn) {
                 const responseText = await getGeminiResponse(finalPrompt);
                 removeLoading();
                 
-                // ★ 關鍵修改：只有在「翻譯」或「語音」模式下，且含有日文時，才顯示朗讀按鈕
-                // 這樣「行程諮詢」就算回傳了日文單字，也不會被誤判為可朗讀的翻譯
-                const isTranslation = (mode === 'translate' || mode === 'voice_auto') && 
-                                      /[\u3040-\u309F\u30A0-\u30FF]/.test(responseText);
+                // 決定是否顯示喇叭按鈕
+                let showAudioBtn = false;
+                
+                if (mode === 'voice_direct') {
+                    // 邏輯：如果你說中文(isInputZh)，代表你要翻成日文給別人聽 -> 顯示喇叭
+                    if (isInputZh) {
+                        showAudioBtn = true;
+                    }
+                    // 如果你錄的是日文，代表是翻譯成中文給自己看 -> 不顯示喇叭
+                } else {
+                    // 手動翻譯模式：只要結果有日文就顯示喇叭
+                    showAudioBtn = (mode === 'translate') && /[\u3040-\u309F\u30A0-\u30FF]/.test(responseText);
+                }
                 
                 const formattedText = responseText.replace(/\n/g, '<br>');
-                appendMessage('ai', formattedText, isTranslation);
+                appendMessage('ai', formattedText, showAudioBtn);
 
-                // 3. 寫入歷史紀錄 (只針對諮詢模式)
+                // 寫入歷史紀錄 (諮詢模式才需要)
                 if (mode === 'consult' || mode === 'auto') {
                     conversationHistory.push(`User: ${text}`);
                     conversationHistory.push(`Guide: ${responseText}`);
-                    if (conversationHistory.length > 20) {
-                        conversationHistory = conversationHistory.slice(conversationHistory.length - 20);
-                    }
+                    if (conversationHistory.length > 20) conversationHistory = conversationHistory.slice(-20);
                 }
 
             } catch (e) {
