@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-/*17:17*/
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -4286,7 +4285,7 @@ function getSmartAdviceText(temp, weatherCode) {
 // [修改] 兩段式分享功能 (解決瀏覽器阻擋視窗問題)
         // 狀態標記：紀錄目前是否已經分析完成
         // --- [新增] Google Places API 救援函式 (三階段定位邏輯用) ---
-    const fetchGooglePlaces = async (lat, lng, radius = 200) => {
+    const fetchGooglePlaces = async (lat, lng, radius = 50) => {
     // [修改] 指定獲取 Google Places 的 Key
     const currentKey = getKey('places'); 
     if (!currentKey) return [];
@@ -4295,16 +4294,10 @@ function getSmartAdviceText(temp, weatherCode) {
         const centerLng = Number(lng);
         
         // 定義要搜尋的地標類型 (排除太過籠統的類型)
-        const validTypes = [
-            "restaurant", "cafe", "tourist_attraction", "park", 
-            "museum", "hospital", "pharmacy", "bank", "atm",
-            "store", "lodging", "transit_station", "school", 
-            "government_office", "convenience_store", "clothing_store", "shopping_mall",
-            "corporate_office", "local_government_office",
-            "establishment",      // 萬用救援：只要是個「地點」都算
-            "point_of_interest",   // 萬用救援：興趣點
-            "general_contractor", "finance", "establishment", "point_of_interest",
-        ];
+         const validTypes = [
+      "restaurant", "cafe", "convenience_store", "tourist_attraction", 
+      "park", "store", "lodging", "transit_station", "museum", "shopping_mall"
+    ];
 
         const url = `https://places.googleapis.com/v1/places:searchNearby`;
         const body = {
@@ -4325,7 +4318,7 @@ function getSmartAdviceText(temp, weatherCode) {
                 headers: {
                     "Content-Type": "application/json",
                     "X-Goog-Api-Key": currentKey,
-                    "X-Goog-FieldMask": "places.displayName,places.name", // 只抓取名稱以節省費用
+                    "X-Goog-FieldMask": "places.displayName,places.addressDescriptor", 
                 },
                 body: JSON.stringify(body),
             });
@@ -4414,7 +4407,7 @@ function getSmartAdviceText(temp, weatherCode) {
                     if (!locationName) {
                         console.log("OSM 無地標名，啟用 Google Places 救援...");
                         // 呼叫我們剛剛新增的輔助函式
-                        const googlePlaces = await fetchGooglePlaces(lat, lon, 50); 
+                        const googlePlaces = await fetchGooglePlaces(lat, lon, 100); 
                         
                         if (googlePlaces.length > 0 && googlePlaces[0].displayName) {
                             locationName = googlePlaces[0].displayName.text;
