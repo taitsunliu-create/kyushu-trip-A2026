@@ -2450,7 +2450,10 @@
         <!-- [新增] Map Code 一覽表 -->
         <div class="card">
             <div class="card-header">
-                <div class="card-title">📍行程景點 Map Code 一覽</div>
+                <div class="card-title" style="display: flex; align-items: center; gap: 6px;">
+                    <svg class="icon-mini" style="color: var(--primary);"><use href="#icon-loc"></use></svg>
+                    行程景點 Map Code 一覽
+                </div>
                 <div class="tag tag-car">車機導航</div>
             </div>
             
@@ -2817,7 +2820,7 @@
                         <li><b>動物餵食：</b>園區內有養山羊、兔子甚至松鼠，小朋友會很愛。</li>
                     </ul>
                 </div>
-                <a href="https://www.google.com/maps/search/?api=1&query=Yufuin+Floral+Village" target="_blank" class="btn-link">導航至童話村 📍</a>
+                <a href="https://www.google.com/maps/search/?api=1&query=Yufuin+Floral+Village" target="_blank" class="btn-link" style="display: flex; align-items: center; justify-content: center; gap: 6px;">導航至童話村 <svg class="icon-mini" style="color: white;"><use href="#icon-loc"></use></svg></a>
             </div>
         </div>
 
@@ -3051,7 +3054,13 @@
             </div>
 
             <div class="info-section" style="border-color: #FBBF24; background-color: #FFFBEB;">
-                <h3 style="color: #B45309; border-bottom-color: #FBBF24;">🇯🇵 日本退稅規定 (Tax Free)</h3>
+                <h3 style="color: #B45309; border-bottom-color: #FBBF24; display: flex; align-items: center; gap: 8px;">
+                    <svg style="width:24px;height:24px;flex-shrink:0;" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="11" fill="white" stroke="#E5E7EB" stroke-width="1"/>
+                        <circle cx="12" cy="12" r="6" fill="#BC002D"/>
+                    </svg>
+                    日本退稅規定 (Tax Free)
+                </h3>
                 <div class="method-detail">
                     <p>2026年日本持續推動電子化退稅，建議事先於 <b>Visit Japan Web</b> 登錄護照資訊以產生免稅 QR Code。</p>
                     <ul style="list-style-type: disc; margin-top: 10px; padding-left: 20px;">
@@ -3394,11 +3403,18 @@
 
        // [修改] 原本的 const apiKey = ""; 替換成以下內容：
 
-// 1. 填入你剛剛產生的加密亂碼
-const encryptedApiKey = "U2FsdGVkX1/64ozwLOVc7Q7oTx058ndDWtXLLJ6Ri7cafbqjyyabFrsg2GixFXZV8bGjn7m7O7ZkH4CKCQjIjA=="; 
 
-// 2. 用來暫存解密後的 Key
-let apiKey = ""; 
+// [修改] 1. 定義兩組加密亂碼 (請將您的 AES 加密字串分別填入)
+// 用於 Gemini AI 對話、翻譯
+const encryptedGeminiKey = "U2FsdGVkX1/64ozwLOVc7Q7oTx058ndDWtXLLJ6Ri7cafbqjyyabFrsg2GixFXZV8bGjn7m7O7ZkH4CKCQjIjA=="; 
+// 用於 Google Places (分享位置時抓地標名稱)
+const encryptedPlacesKey = "U2FsdGVkX18lboyLOHvSireLOqo+Tfbx70XCgJaQinOaeYW+husBH5S/JaqTRG1zw3ggoldpqX89EHoR9R87iQ=="; 
+
+// [修改] 2. 用來暫存解密後的 Key
+let geminiKey = ""; 
+let googleKey = "";
+
+
 // [新增] 對話歷史紀錄 (讓 AI 記住前幾句話)
     let conversationHistory = [];
 // [新增] AI 導遊的系統提示詞 (這裡定義了它的記憶與人設)
@@ -3420,29 +3436,44 @@ let apiKey = "";
     3. 準確：只能根據上述行程回答，不要編造不在行程內的景點。
     4. 語言：請使用繁體中文 (台灣)。
     5. 導航支援：若使用者詢問地點位置或如何前往，請務必在回答中附上 Google Maps 連結，格式請嚴格遵守：
-       <br><a href='https://www.google.com/maps/search/?api=1&query=地點名稱' target='_blank' style='display:inline-block; margin-top:5px; color:#2563EB; font-weight:bold; text-decoration:none; border:1px solid #2563EB; padding:2px 8px; border-radius:12px;'>📍 導航至 [地點]</a>
+       <br><a href='https://www.google.com/maps/search/?api=1&query=地點名稱' target='_blank' style='display:inline-flex; align-items:center; gap:4px; margin-top:5px; color:#2563EB; font-weight:bold; text-decoration:none; border:1px solid #2563EB; padding:2px 8px; border-radius:12px;'><svg style='width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;' viewBox='0 0 24 24'><use href='#icon-loc'></use></svg>導航至 [地點]</a>
     `;
 // 3. 解密函式 (會在需要 API 時自動呼叫)
-function getDecryptedKey() {
-    if (apiKey) return apiKey; // 如果已經解密過，直接回傳
+// [修改] 3. 雙鑰匙解密函式 (傳入 'gemini' 或 'places' 取得對應 Key)
+function getKey(type) {
+    // A. 如果記憶體中已經有解好的 Key，直接回傳
+    if (type === 'gemini' && geminiKey) return geminiKey;
+    if (type === 'places' && googleKey) return googleKey;
 
-    // 簡單的防呆機制：利用 localStorage 記住密碼，避免每次重新整理都要輸入
+    // B. 讀取密碼 (兩把鑰匙共用同一個密碼 'app_password')
     let password = localStorage.getItem("app_password");
     
     if (!password) {
-        password = prompt("請輸入 API 金鑰密碼以解鎖 AI 功能：");
+        password = prompt("請輸入 API 金鑰密碼 (將同時解鎖 AI 與地圖功能)：");
     }
 
-    if (!password) return null; // 使用者取消
+    if (!password) return null; // 使用者按取消
 
     try {
-        const bytes = CryptoJS.AES.decrypt(encryptedApiKey, password);
-        const originalText = bytes.toString(CryptoJS.enc.Utf8);
-        
-        if (originalText.startsWith("AIza")) { // Google Key 通常以 AIza 開頭，用來簡單驗證
-            apiKey = originalText;
-            localStorage.setItem("app_password", password); // 密碼正確才存起來
-            return apiKey;
+        // C. 內部輔助：單純解密字串
+        const decrypt = (cipher) => {
+            if (!cipher) return "";
+            const bytes = CryptoJS.AES.decrypt(cipher, password);
+            return bytes.toString(CryptoJS.enc.Utf8);
+        };
+
+        // D. 嘗試用同一組密碼解開兩把鑰匙
+        const g_key = decrypt(encryptedGeminiKey);
+        const p_key = decrypt(encryptedPlacesKey);
+
+        // E. 驗證 (只要其中一把成功解出 AIza 開頭，就視為密碼正確)
+        // 注意：若您只有設其中一個，另一個留空字串也沒關係
+        if (g_key.startsWith("AIza") || p_key.startsWith("AIza")) {
+            geminiKey = g_key;
+            googleKey = p_key;
+            localStorage.setItem("app_password", password); // 密碼正確，存起來
+            
+            return type === 'gemini' ? geminiKey : googleKey;
         } else {
             alert("密碼錯誤，無法解密 API Key。");
             localStorage.removeItem("app_password"); // 清除錯誤密碼
@@ -3747,9 +3778,10 @@ function getSmartAdviceText(temp, weatherCode) {
         // 新增：獨立的 Gemini 呼叫函數，只回傳文字，不操作 UI
  // [修改] Gemini API 呼叫函式：升級支援圖片傳送 (Multimodal)
 // [修改] Gemini API 呼叫函式：升級為最新的 Gemini 3 Flash Preview
-        async function getGeminiResponse(promptText, imageBase64 = null) {
-            const currentKey = getDecryptedKey();
-            if (!currentKey) {
+       async function getGeminiResponse(promptText, imageBase64 = null) {
+    // [修改] 指定獲取 Gemini 的 Key
+    const currentKey = getKey('gemini');
+    if (!currentKey) {
                 appendMessage('ai', '⚠️ 尚未輸入正確密碼，無法使用 AI 功能。');
                 throw new Error("API Key Missing");
             }
@@ -4249,12 +4281,66 @@ function getSmartAdviceText(temp, weatherCode) {
             if (event.target == lModal) lModal.style.display = "none";
             if (event.target == cModal) cModal.style.display = "none"; // [新增]
         }
+        
 // [修改] 兩段式分享功能 (解決瀏覽器阻擋視窗問題)
         // 狀態標記：紀錄目前是否已經分析完成
+        // --- [新增] Google Places API 救援函式 (三階段定位邏輯用) ---
+    const fetchGooglePlaces = async (lat, lng, radius = 200) => {
+    // [修改] 指定獲取 Google Places 的 Key
+    const currentKey = getKey('places'); 
+    if (!currentKey) return [];
+
+        const centerLat = Number(lat);
+        const centerLng = Number(lng);
+        
+        // 定義要搜尋的地標類型 (排除太過籠統的類型)
+        const validTypes = [
+            "restaurant", "cafe", "tourist_attraction", "park", 
+            "museum", "hospital", "pharmacy", "bank", "atm",
+            "store", "lodging", "transit_station", "school", 
+            "government_office", "convenience_store", "clothing_store", "shopping_mall",
+            "corporate_office", "local_government_office",
+            "establishment",      // 萬用救援：只要是個「地點」都算
+            "point_of_interest",   // 萬用救援：興趣點
+            "general_contractor", "finance", "establishment", "point_of_interest",
+        ];
+
+        const url = `https://places.googleapis.com/v1/places:searchNearby`;
+        const body = {
+            includedTypes: validTypes,
+            maxResultCount: 1, // 我們只需要最接近的那一個
+            locationRestriction: {
+                circle: {
+                    center: { latitude: centerLat, longitude: centerLng },
+                    radius: Number(radius), // 搜尋半徑 (公尺)
+                },
+            },
+            languageCode: "zh-TW",
+        };
+
+        try {
+            const res = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Goog-Api-Key": currentKey,
+                    "X-Goog-FieldMask": "places.displayName,places.name", // 只抓取名稱以節省費用
+                },
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) return [];
+            const data = await res.json();
+            return data.places || [];
+        } catch (e) {
+            console.error("Google Places API Error:", e);
+            return [];
+        }
+    };
         let isLocReady = false;
         let pendingShareData = null;
 
 // [修改] 智慧分享功能 (嘗試一鍵完成，遇阻擋則優雅變身)
+        // [修改] 智慧分享功能 (三階段精準定位版)
         function shareCurrentLocation() {
             const btn = document.getElementById('btn-share-loc');
 
@@ -4266,9 +4352,8 @@ function getSmartAdviceText(temp, weatherCode) {
                     })
                     .catch((err) => {
                         console.log("使用者取消分享", err);
-                        // 取消後保持綠色按鈕，讓使用者有機會反悔再按一次
                     });
-                return; // 結束，不重複執行定位
+                return; 
             }
 
             // --- [階段一] 正常流程 (第一次點擊) ---
@@ -4277,7 +4362,7 @@ function getSmartAdviceText(temp, weatherCode) {
                 return;
             }
 
-            // 防止重複點擊 (如果正在分析中)
+            // 防止重複點擊
             if (btn.dataset.shareState === 'analyzing') return;
 
             // 1. 鎖定並變更為「雷達分析中」動畫
@@ -4285,9 +4370,8 @@ function getSmartAdviceText(temp, weatherCode) {
                 btn.dataset.originalHtml = btn.innerHTML;
             }
             
-            // 設定為分析中狀態
             btn.dataset.shareState = 'analyzing';
-            btn.style.pointerEvents = "none"; // 暫時禁止點擊
+            btn.style.pointerEvents = "none"; 
             
             // 雷達動畫
             btn.innerHTML = `
@@ -4304,58 +4388,79 @@ function getSmartAdviceText(temp, weatherCode) {
             btn.style.color = "#10B981";      
             btn.style.opacity = "0.8";
 
-            // 2. 執行定位
+            // 2. 執行定位 (加上 async 以支援 await)
             navigator.geolocation.getCurrentPosition(async position => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
                 
-                // [修正] 確保網址格式正確 (移除之前的錯誤字元)
-                const mapUrl = `https://www.google.com/maps?q=${lat},${lon}`;
+                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
                 
-                let locationContext = "";
-                try {
-                    // A. 取得真實地址
-                    const geoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=zh-TW`;
-                    const geoRes = await fetch(geoUrl);
-                    const geoData = await geoRes.json();
-                    const rawAddress = geoData.display_name || "未知地點";
+                let locationName = ""; 
+                let locationSource = ""; 
 
-                    // B. AI 潤飾 (店家/地標優先邏輯)
-                    const prompt = `
-                        Task: Analyze this location data: "${rawAddress}" to describe the location for a friend.
-                        Logic:
-                        1. **Priority 1 (Store/Landmark)**: If a specific Store Name (e.g., 7-11, Starbucks), Building Name, or Landmark exists, output: "靠近 [Name]".
-                        2. **Priority 2 (Exact Address)**: If NO specific store is found, output the precise street and house number: "[Street Name] [Number]號".
-                        Output: A single concise phrase in Traditional Chinese.
-                    `;
-                    locationContext = await getGeminiResponse(prompt);
+                try {
+                    // --- 第一關：OSM (Nominatim) ---
+                    const osmUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=zh-TW`;
+                    const osmRes = await fetch(osmUrl);
+                    const osmData = await osmRes.json();
+                    
+                    if (osmData && osmData.name) {
+                        locationName = osmData.name;
+                        locationSource = "(OSM)";
+                    }
+
+                    // --- 第二關：Google Places API (NEW) 救援 ---
+                    if (!locationName) {
+                        console.log("OSM 無地標名，啟用 Google Places 救援...");
+                        // 呼叫我們剛剛新增的輔助函式
+                        const googlePlaces = await fetchGooglePlaces(lat, lon, 50); 
+                        
+                        if (googlePlaces.length > 0 && googlePlaces[0].displayName) {
+                            locationName = googlePlaces[0].displayName.text;
+                            locationSource = "(Google)";
+                        }
+                    }
+
+                    // --- 第三關：OSM 門牌地址 (Fallback) ---
+                    if (!locationName && osmData && osmData.address) {
+                        const addr = osmData.address;
+                        const road = addr.road || addr.pedestrian || "";
+                        const houseNum = addr.house_number || "";
+                        const suburb = addr.suburb || addr.neighbourhood || "";
+                        
+                        if (road) {
+                            locationName = `${road}${houseNum ? " " + houseNum + "" : ""}`;
+                        } else if (suburb) {
+                            locationName = suburb;
+                        } else {
+                            locationName = osmData.display_name.split(',')[0];
+                        }
+                        locationSource = "(地址)";
+                    }
+
+                    if (!locationName) locationName = "我的位置";
+                    console.log(`定位完成: ${locationName} ${locationSource}`);
+
                 } catch (e) {
-                    console.error("分析失敗", e);
-                    locationContext = "我的位置";
+                    console.error("定位解析失敗", e);
+                    locationName = "我的位置";
                 }
 
                 // C. 準備全域資料
                 window.pendingShareData = {
                     title: '我的即時位置',
-                    text: `【緊急/報平安】我目前位置：${locationContext} 附近`,
+                    text: `【報平安】我目前在「${locationName}」附近`,
                     url: mapUrl
                 };
 
-                // D. 嘗試觸發分享 (關鍵邏輯)
+                // D. 嘗試觸發分享
                 try {
-                    // 嘗試一鍵觸發
                     await navigator.share(window.pendingShareData);
-                    // 若成功，重置按鈕
                     resetShareButton(btn);
                 } catch (err) {
-                    // ⚠️ 如果進到這裡，代表被瀏覽器擋住了 (或使用者取消)
-                    // 我們不跳醜醜的視窗，而是將按鈕「進化」為發送鈕
-                    console.log("自動分享未觸發，切換為手動確認模式");
-                    
-                    // 解除鎖定
+                    // 被阻擋時，切換為手動發送按鈕
+                    console.log("自動分享未觸發，切換為手動模式");
                     btn.style.pointerEvents = "auto";
-                    
-                    // 變更為「紙飛機發送」樣式
                     btn.innerHTML = `
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px; animation: popIn 0.3s;">
                             <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -4363,16 +4468,11 @@ function getSmartAdviceText(temp, weatherCode) {
                         </svg>
                         點擊發送
                     `;
-                    // 變更為醒目的綠色實心按鈕
                     btn.style.background = "#10B981"; 
                     btn.style.borderColor = "#10B981";
                     btn.style.color = "white";
                     btn.style.opacity = "1";
-                    
-                    // 標記狀態為 ready，讓下次點擊走上面的快速通道
                     btn.dataset.shareState = 'ready';
-                    
-                    // (選用) 震動提示使用者
                     if(navigator.vibrate) navigator.vibrate(50);
                 }
 
