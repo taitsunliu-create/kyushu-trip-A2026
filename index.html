@@ -5566,6 +5566,74 @@ function compressImage(file, maxWidth, quality) {
     });
 }
         document.addEventListener('DOMContentLoaded', () => {
+            // [新增] 依據 GPS 位置自動判斷日夜 (支援跨時區)
+    function initDynamicTheme() {
+        const header = document.querySelector('header');
+        
+        // 定義成功時的邏輯
+        const applyTheme = async (lat, lon) => {
+            try {
+                // 呼叫 API，傳入當下座標，API 會根據經緯度與天文時間自動計算
+                // current_weather=true 包含 is_day (1=白天, 0=黑夜)
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+                
+                // 嘗試讀取快取以節省流量 (與天氣功能共用快取系統)
+                const cacheKey = `theme_status_${lat.toFixed(1)}_${lon.toFixed(1)}`;
+                let isDay = CACHE_SYSTEM.get(cacheKey);
+
+                if (isDay === null) {
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    isDay = data.current_weather.is_day;
+                    // 存入快取 30 分鐘
+                    CACHE_SYSTEM.save(cacheKey, isDay, 30);
+                }
+
+                // 切換樣式：0 代表黑夜，1 代表白天
+                if (isDay === 0) {
+                    header.classList.add('is-night');
+                    console.log(`[主題] 位於 (${lat},${lon})，目前是夜晚 🌙`);
+                } else {
+                    header.classList.remove('is-night');
+                    console.log(`[主題] 位於 (${lat},${lon})，目前是白天 ☀️`);
+                }
+            } catch (e) {
+                console.warn("主題 API 連線失敗，切換為系統時間備案");
+                fallbackTheme();
+            }
+        };
+
+        // 備案邏輯：如果沒開 GPS 或 API 失敗，改用手機系統時間
+        const fallbackTheme = () => {
+            const hour = new Date().getHours();
+            // 簡單判斷：晚上 6 點後或早上 6 點前為夜晚
+            if (hour >= 18 || hour < 6) {
+                header.classList.add('is-night');
+            } else {
+                header.classList.remove('is-night');
+            }
+        };
+
+        // 開始執行定位
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // 成功取得位置，使用 API 精準判斷
+                    applyTheme(position.coords.latitude, position.coords.longitude);
+                },
+                (error) => {
+                    console.log("無法取得位置，使用時間備案");
+                    fallbackTheme();
+                },
+                { timeout: 5000 }
+            );
+        } else {
+            fallbackTheme();
+        }
+    }
+
+    // 啟動主題偵測
+    initDynamicTheme();
         // [新增] 圖片處理與壓縮邏輯
         
             // --- 智慧自動展開邏輯開始 ---
