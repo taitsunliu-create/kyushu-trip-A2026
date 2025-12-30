@@ -5763,6 +5763,11 @@ function compressImage(file, maxWidth, quality) {
                     header.classList.remove('is-night');
                     console.log(`[主題] 位於 (${lat},${lon})，目前是白天 ☀️`);
                 }
+
+                // ★★★ [插入這段] 設定完日夜後，強制重繪特效 ★★★
+                if (window.setWeatherEffect && window.currentWeatherIcon) {
+                    setWeatherEffect(window.currentWeatherIcon);
+                }
             } catch (e) {
                 console.warn("主題 API 連線失敗，切換為系統時間備案");
                 fallbackTheme();
@@ -5777,6 +5782,11 @@ function compressImage(file, maxWidth, quality) {
                 header.classList.add('is-night');
             } else {
                 header.classList.remove('is-night');
+            }
+
+            // ★★★ [插入這段] 備案模式也要重繪特效 ★★★
+            if (window.setWeatherEffect && window.currentWeatherIcon) {
+                setWeatherEffect(window.currentWeatherIcon);
             }
         };
 
@@ -6227,8 +6237,14 @@ function compressImage(file, maxWidth, quality) {
             btn.classList.remove('copied');
         }, 2000);
     }
-    // [新增] 切換 Header 背景與粒子特效
+   // [新增] 定義一個全域變數來記住現在是什麼圖示 (預設 cloud)
+window.currentWeatherIcon = 'cloud'; 
+
+// [修改] 原本的 setWeatherEffect 函式
 function setWeatherEffect(iconType) {
+    // ★★★ [插入這行] 記住現在的天氣圖示，以便日夜切換後重繪 ★★★
+    window.currentWeatherIcon = iconType;
+
     const header = document.querySelector('header');
     const layer = document.getElementById('weather-effect-layer');
     if (!header || !layer) return;
@@ -6334,7 +6350,7 @@ function setWeatherEffect(iconType) {
         // [修正] 設定日夜透明度
         // 白天 (0.8): 霧很濃，下方白白的
         // 晚上 (0.2): 霧很薄，像一層薄紗，才不會讓夜空變成全白
-        const fogOp = isNight ? 0.2 : 0.8;
+        const fogOp = isNight ? 0.5 : 0.8;
         
         // 使用剛剛新增的 CSS class "fog-layer"
         layer.innerHTML = `<div class="fog-layer" style="opacity:${fogOp};"></div>`;
