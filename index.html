@@ -1582,9 +1582,12 @@
                     行前準備 Check List
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <div class="tag tag-tip" id="checklist-progress" style="background:#FFFBEB; color:#D97706; font-weight:700;">計算中...</div>
-                    <div class="toggle-icon" style="font-size: 0.8rem; color: #6B7280; font-weight: 700; transition: transform 0.3s;">▼</div>
-                </div>
+                <button onclick="resetChecklist(event)" style="border:none; background:none; color:#9CA3AF; font-size:0.8rem; cursor:pointer; text-decoration:underline;">
+                    ↺ 重置
+                </button>
+                <div class="tag tag-tip" id="checklist-progress" style="background:#FFFBEB; color:#D97706; font-weight:700;">計算中...</div>
+                <div class="toggle-icon" style="font-size: 0.8rem; color: #6B7280; font-weight: 700; transition: transform 0.3s;">▼</div>
+            </div>
             </div>
             
             <div id="checklist-container" class="checklist-container">
@@ -5432,7 +5435,33 @@ function resetShareButton(btn) {
                 renderChecklist();
             }
         }
+// [新增] 重置檢查清單 (恢復預設值)
+        function resetChecklist(event) {
+            event.stopPropagation(); // 阻止冒泡，避免觸發折疊
+            
+            if (!confirm("確定要重置清單嗎？\n\n這將會：\n1. 清除所有勾選狀態\n2. 刪除您自訂的新增項目\n3. 恢復為原始預設清單")) {
+                return;
+            }
 
+            // 恢復為預設項目 (使用深拷貝，避免汙染原始 defaultItems)
+            checklistData = JSON.parse(JSON.stringify(defaultItems));
+            
+            // 重新渲染並儲存
+            renderChecklist();
+            
+            // 如果清單目前是收合的，自動展開讓使用者看到結果
+            const container = document.getElementById('checklist-container');
+            const icon = document.querySelector('.checklist-card-header .toggle-icon');
+            if (container && !container.classList.contains('show')) {
+                container.classList.add('show');
+                if(icon) {
+                    icon.style.transform = 'rotate(180deg)';
+                    icon.style.color = '#2563EB';
+                }
+            }
+            
+            alert("清單已重置完成！");
+        }
         // 折疊/展開控制
         function toggleChecklist(headerEl) {
             const container = document.getElementById('checklist-container');
