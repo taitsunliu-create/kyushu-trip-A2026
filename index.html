@@ -57,6 +57,8 @@
         }
         
         .header-content {
+            position: relative; /* 確保 z-index 生效 */
+            z-index: 10;        /* 關鍵修正！讓文字與按鈕在最上層 */
             display: flex;
             flex-direction: row; 
             justify-content: space-between;
@@ -1435,11 +1437,11 @@
 /* --- [新增] 住宿頁面優化樣式 End --- */
   /* --- [新增] iOS 天氣動態特效 (仿 iPhone 天氣) --- */
 /* 1. Header 容器設定 */
-header {
-    position: relative;
-    overflow: hidden;
-    transition: background 1.0s ease-in-out; /* 背景色切換時的柔和過渡 */
-    z-index: 1;
+.weather-bg-layer {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0;  /* 關鍵修正！讓它浮在背景色之上 */
+    pointer-events: none; /* 讓滑鼠點擊可以穿透特效，點到下面的按鈕 */
 }
 
 /* 2. 特效層 (放在文字下方) */
@@ -6215,13 +6217,15 @@ function setWeatherEffect(iconType) {
     }
     else if (iconType === 'snow') {
         header.classList.add('w-snow');
-        // 生成 15 片雪花
+        // [修改] 增加雪花數量 (15 -> 30) 並調整樣式
         let html = '';
-        for(let i=0; i<15; i++) {
+        for(let i=0; i<30; i++) { // 數量變多
             const left = Math.floor(Math.random() * 100);
             const delay = (Math.random() * 5).toFixed(2);
-            const size = 3 + Math.floor(Math.random() * 5);
-            html += `<div class="snow-flake" style="left:${left}%; width:${size}px; height:${size}px; animation-delay:${delay}s;"></div>`;
+            // 讓雪花大小差異大一點 (3px ~ 8px)
+            const size = 3 + Math.floor(Math.random() * 6); 
+            // [關鍵] 這裡增加了 opacity: 0.9 讓它在淺色背景更清楚
+            html += `<div class="snow-flake" style="left:${left}%; width:${size}px; height:${size}px; animation-delay:${delay}s; opacity: 0.9;"></div>`;
         }
         layer.innerHTML = html;
     }
