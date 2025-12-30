@@ -1505,6 +1505,22 @@ header.is-night {
 
 /* [雲朵飄動] */
 /* [雲朵飄動 - 新版] */
+/* [霧氣特效 - 補回遺失的設定] */
+.fog-layer {
+    position: absolute;
+    width: 100%; height: 100%;
+    top: 0; left: 0;
+    /* 使用漸層模擬地面升起的霧氣 */
+    background: linear-gradient(to top, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.2) 60%, transparent 100%);
+    filter: blur(15px); /* 強力模糊，製造朦朧感 */
+    animation: fog-pulse 8s infinite alternate;
+    z-index: 1;
+}
+
+@keyframes fog-pulse {
+    0% { opacity: 0.6; transform: translateY(0); }
+    100% { opacity: 1; transform: translateY(-10px); } /* 霧氣上下浮動 */
+}
 .cloud-shape {
     position: absolute;
     width: 100px; height: 40px;
@@ -6313,11 +6329,15 @@ function setWeatherEffect(iconType) {
     else if (iconType === 'fog') {
         header.classList.add('w-fog');
         
-        // [關鍵修改] 晚上霧氣要更稀薄，才不會變成「整片白牆」
-        // 白天 0.5 -> 晚上 0.2
-        const fogOp = header.classList.contains('is-night') ? 0.2 : 0.5;
+        const isNight = header.classList.contains('is-night');
         
-        layer.innerHTML = `<div class="cloud-fog" style="width:100%; height:100%; opacity:${fogOp};"></div>`;
+        // [修正] 設定日夜透明度
+        // 白天 (0.8): 霧很濃，下方白白的
+        // 晚上 (0.2): 霧很薄，像一層薄紗，才不會讓夜空變成全白
+        const fogOp = isNight ? 0.2 : 0.8;
+        
+        // 使用剛剛新增的 CSS class "fog-layer"
+        layer.innerHTML = `<div class="fog-layer" style="opacity:${fogOp};"></div>`;
     }
     else {
         header.classList.add('w-cloud'); // 預設
