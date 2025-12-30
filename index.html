@@ -1489,18 +1489,40 @@ header.is-night {
     to { transform: translateY(400px); }
 }
 
-/* [雪花] */
+/* [雪花 - SVG 精緻版] */
 .snow-flake {
     position: absolute;
-    background: #FFF;
-    border-radius: 50%;
-    opacity: 0.8;
-    top: -10px;
-    animation: snow-fall 5s linear infinite; /* 加上了 5s */
+    /* 1. 移除原本的白色背景與圓角 */
+    /* background: #FFF; */ 
+    /* border-radius: 50%; */
+    
+    /* 2. 改用 SVG 雪花圖案 (Base64編碼) */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='2' y1='12' x2='22' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='2' x2='12' y2='22'%3E%3C/line%3E%3Cline x1='4.93' y1='4.93' x2='19.07' y2='19.07'%3E%3C/line%3E%3Cline x1='19.07' y1='4.93' x2='4.93' y2='19.07'%3E%3C/line%3E%3Cpath d='M16 12h4'%3E%3C/path%3E%3Cpath d='M4 12h4'%3E%3C/path%3E%3Cpath d='M12 4v4'%3E%3C/path%3E%3Cpath d='M12 16v4'%3E%3C/path%3E%3C/svg%3E");
+    
+    /* 3. 設定背景模式 */
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: transparent; /* 確保背景透明 */
+
+    opacity: 0.9;
+    top: -20px; /* 稍微往上移，避免一開始就露餡 */
+    
+    /* 4. 加入旋轉動畫 (讓雪花邊掉邊轉，更真實) */
+    animation: snow-fall-rotate 5s linear infinite; 
 }
-@keyframes snow-fall {
-    0% { transform: translateY(0) translateX(0); opacity: 0.8; }
-    100% { transform: translateY(300px) translateX(20px); opacity: 0; }
+
+/* [新增] 雪花飄落 + 自轉動畫 */
+@keyframes snow-fall-rotate {
+    0% { 
+        transform: translateY(0) translateX(0) rotate(0deg); 
+        opacity: 0.9; 
+    }
+    100% { 
+        /* 往下掉 300px + 往右飄 20px + 自轉 360度 */
+        transform: translateY(400px) translateX(30px) rotate(360deg); 
+        opacity: 0; 
+    }
 }
 
 /* [雲朵飄動] */
