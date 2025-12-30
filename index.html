@@ -290,166 +290,146 @@
         /* 晚上的背景: 深邃的午夜藍 */
         header.is-night {
             background: linear-gradient(135deg, #0f172a, #1e3a8a);
-        }
-
-        /* 星星層 (預設隱藏) */
-        /* [修改] 背景特效層 (星星/雨/雪/雲) - 支援天氣動畫 */
-        /* [修改] 背景特效層 - 電影級天氣動畫 */
+        }/* [重製] iOS 風格高清天氣特效 (HD Weather) */
         .header-bg-effect {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 0;
-            opacity: 0; transition: opacity 1s ease;
             overflow: hidden;
         }
 
-        /* --- 1. 晴朗 (Sun) --- */
-        /* 加入旋轉光芒與耀光，讓畫面變亮 */
+        /* --- 1. 晴朗 (Sun) - 清晰光束與光暈 --- */
+        header.weather-sun {
+            /* iOS 風格：鮮豔的蔚藍 */
+            background: linear-gradient(160deg, #00B4DB, #0083B0) !important;
+        }
         header.weather-sun .header-bg-effect {
             opacity: 1;
-            /* 模擬太陽光暈 */
-            background: radial-gradient(circle at 90% 10%, rgba(255,255,200,0.8) 0%, rgba(255,255,255,0.2) 20%, transparent 60%);
-            mix-blend-mode: overlay; /* 讓光線疊加在藍底上更自然 */
+            /* 定義太陽本體 (右上角清晰圓形) */
+            background: radial-gradient(circle at 85% 15%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 10%, transparent 40%);
         }
-        /* 增加旋轉的光束 */
+        /* 旋轉的清晰光芒 */
         header.weather-sun .header-bg-effect::before {
             content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%;
-            background: repeating-conic-gradient(from 0deg, rgba(255,255,255,0.1) 0deg, rgba(255,255,255,0.1) 10deg, transparent 10deg, transparent 20deg);
-            animation: sun-rotate 60s linear infinite;
+            /* 使用 Conic Gradient 製作銳利光束 */
+            background: repeating-conic-gradient(
+                from 0deg at 50% 50%, 
+                transparent 0deg, 
+                transparent 10deg, 
+                rgba(255,255,255,0.1) 10deg, 
+                rgba(255,255,255,0.1) 20deg
+            );
+            animation: sun-spin 40s linear infinite;
             transform-origin: 50% 50%;
         }
-        @keyframes sun-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes sun-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* --- 2. 多雲 (Cloud) --- */
-        /* 讓背景變暗 + 流動的霧氣 */
+        /* --- 2. 多雲 (Cloud) - 移除模糊，改為層次流動 --- */
         header.weather-cloud {
-            /* 讓原本的藍色背景變深灰，模擬烏雲遮日 */
-            background: linear-gradient(135deg, #374151, #1F2937) !important;
+            /* iOS 風格：灰藍色調 */
+            background: linear-gradient(180deg, #546E7A, #37474F) !important;
         }
         header.weather-cloud .header-bg-effect {
-            opacity: 0.8;
-            /* 兩層霧氣交錯移動 */
+            opacity: 1;
+        }
+        /* 第一層雲 (動得慢，背景) */
+        header.weather-cloud .header-bg-effect::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 200%; height: 100%;
+            background: radial-gradient(circle at 50% 120%, rgba(255,255,255,0.2) 20%, transparent 60%);
+            background-size: 50% 100%; /* 雲塊大小 */
+            animation: cloud-drift 20s linear infinite alternate;
+        }
+        /* 第二層雲 (動得快，前景，較亮) */
+        header.weather-cloud .header-bg-effect::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 200%; height: 100%;
             background: 
-                linear-gradient(to right, transparent 50%, rgba(255,255,255,0.1) 80%, transparent 100%),
-                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05), transparent 80%);
-            background-size: 200% 100%, 100% 100%;
-            animation: cloud-pass 15s linear infinite alternate;
+                radial-gradient(circle at 20% 80%, rgba(255,255,255,0.15) 10%, transparent 40%),
+                radial-gradient(circle at 80% 90%, rgba(255,255,255,0.15) 15%, transparent 40%);
+            animation: cloud-drift 15s linear infinite alternate-reverse;
         }
-        @keyframes cloud-pass { 0% { background-position: 0% 0%; } 100% { background-position: 100% 0%; } }
+        @keyframes cloud-drift { from { transform: translateX(0); } to { transform: translateX(-50px); } }
 
-        /* --- 3. 下雨 (Rain) - 分小雨/大雨 --- */
-        /* 共用雨滴設定 */
-        .rain-layer {
-            position: absolute; width: 100%; height: 100%;
-            background-image: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
-            background-repeat: repeat;
+        /* --- 3. 下雨 (Rain) - 銳利雨絲 --- */
+        header.weather-rain-heavy, header.weather-rain-light {
+            /* iOS 風格：深沉雨天灰 */
+            background: linear-gradient(180deg, #203A43, #2C5364) !important;
         }
-
-        /* 小雨 (Light Rain): 細長、慢速 */
-        header.weather-rain-light .header-bg-effect { opacity: 0.6; }
+        /* 雨滴共用設定 */
+        header.weather-rain-heavy .header-bg-effect::before,
         header.weather-rain-light .header-bg-effect::before {
-            content: ''; position: absolute; width: 100%; height: 100%; top:-100%;
-            background: inherit; background-size: 1px 30px; /* 細線 */
-            animation: rain-drop 0.8s linear infinite;
-            background-image: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.4), rgba(255,255,255,0));
+            content: ''; position: absolute; top: -100%; left: 0; width: 100%; height: 100%;
+            /* 使用 Linear Gradient 繪製「銳利線條」，不再是模糊漸層 */
+            background-image: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
         }
 
-        /* 大雨 (Heavy Rain): 粗、密集、極快、傾斜 */
-        header.weather-rain-heavy .header-bg-effect { opacity: 0.9; }
+        /* 小雨: 細、直、慢 */
+        header.weather-rain-light .header-bg-effect { opacity: 1; }
+        header.weather-rain-light .header-bg-effect::before {
+            background-size: 1px 40px; /* 極細雨絲 */
+            animation: rain-drop 0.8s linear infinite;
+        }
+
+        /* 大雨: 粗、斜、快、多 */
+        header.weather-rain-heavy .header-bg-effect { opacity: 1; }
         header.weather-rain-heavy .header-bg-effect::before {
-            content: ''; position: absolute; width: 100%; height: 100%; top:-100%; left: -20%;
-            background-size: 2px 60px; /* 粗長線 */
-            animation: rain-drop 0.3s linear infinite; /* 極快 */
-            transform: rotate(10deg); /* 被風吹斜 */
-            background-image: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.8), rgba(255,255,255,0));
-            box-shadow: 100px 0 0 rgba(255,255,255,0.2); /* 增加密度殘影 */
+            background-size: 2px 80px; /* 粗長雨絲 */
+            transform: skewX(-10deg); /* 被風吹斜 */
+            animation: rain-drop 0.4s linear infinite;
+            /* 增加密度：利用 box-shadow 複製雨滴層 (模擬多層次) */
+            box-shadow: 20px 20px 0 rgba(255,255,255,0.2), -20px 50px 0 rgba(255,255,255,0.2); 
         }
         @keyframes rain-drop { 0% { top: -100%; } 100% { top: 100%; } }
 
-        /* --- 4. 下雪 (Snow) - 分細雪/大雪 --- */
-        /* 雪花共用動畫: 垂直落下 + 水平搖擺 (模擬空氣阻力) */
-        @keyframes snow-sway {
-            0% { transform: translateX(0) translateY(0); }
-            25% { transform: translateX(10px) translateY(25vh); }
-            50% { transform: translateX(-5px) translateY(50vh); }
-            75% { transform: translateX(8px) translateY(75vh); }
-            100% { transform: translateX(0) translateY(100vh); }
+        /* --- 4. 下雪 (Snow) - 清晰雪點 --- */
+        header.weather-snow-heavy, header.weather-snow-light {
+            /* iOS 風格：冷冽黑灰藍 */
+            background: linear-gradient(180deg, #1e3c72, #2a5298) !important;
         }
-
-        /* 細雪 (Light Snow): 稀疏、小點、慢 */
-        header.weather-snow-light .header-bg-effect { opacity: 0.8; }
+        
+        /* 雪花共用：圓形實心點，不模糊 */
+        header.weather-snow-heavy .header-bg-effect::before,
         header.weather-snow-light .header-bg-effect::before {
             content: ''; position: absolute; top: -100%; left: 0; width: 100%; height: 100%;
-            background-image: radial-gradient(white 2px, transparent 3px);
-            background-size: 50px 50px;
-            animation: snow-sway 10s linear infinite;
+            background-repeat: repeat;
         }
 
-        /* 大雪 (Heavy Snow): 密集、大小交錯、稍快 */
+        /* 細雪 */
+        header.weather-snow-light .header-bg-effect { opacity: 1; }
+        header.weather-snow-light .header-bg-effect::before {
+            /* 清晰的小圓點 */
+            background-image: radial-gradient(circle, white 20%, transparent 25%);
+            background-size: 10px 10px; /* 粒子間距 */
+            animation: snow-fall 5s linear infinite;
+        }
+
+        /* 大雪 (雙層視差) */
         header.weather-snow-heavy .header-bg-effect { opacity: 1; }
         header.weather-snow-heavy .header-bg-effect::before {
-            content: ''; position: absolute; top: -100%; left: 0; width: 100%; height: 100%;
-            /* 兩層雪花 */
+            /* 大小不一的清晰圓點 */
             background-image: 
-                radial-gradient(white 3px, transparent 4px),
-                radial-gradient(rgba(255,255,255,0.7) 1px, transparent 2px);
-            background-size: 80px 80px, 30px 30px;
-            animation: snow-sway 6s linear infinite;
+                radial-gradient(circle, white 30%, transparent 35%),
+                radial-gradient(circle, rgba(255,255,255,0.7) 20%, transparent 25%);
+            background-size: 50px 50px, 30px 30px;
+            background-position: 0 0, 15px 15px;
+            animation: snow-fall 3s linear infinite;
+        }
+        @keyframes snow-fall { 
+            0% { transform: translateY(0); } 
+            100% { transform: translateY(100vh); } 
         }
 
-        /* 1. 星空模式 (預設夜晚: is-night) */
-        /* 只有在沒有其他天氣干擾時，夜晚才顯示星星 */
+        /* 5. 晚上的星空 (維持原本就不錯的清晰度) */
+        header.is-night:not(.weather-rain-heavy):not(.weather-rain-light):not(.weather-snow-heavy):not(.weather-cloud) {
+            background: linear-gradient(135deg, #0f172a, #1e3a8a) !important;
+        }
         header.is-night .header-bg-effect {
-            opacity: 0.8;
+            /* 只有在非雨雪天時才顯示星星背景 */
             background-image: 
                 radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
                 radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px);
             background-size: 550px 550px, 350px 350px;
             background-position: 0 0, 40px 60px;
-        }
-
-        /* 2. 下雨模式 (Rain) - 優先權高於星星 */
-        header.weather-rain .header-bg-effect {
-            opacity: 0.7 !important; /* 強制顯示 */
-            background-image: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0) 100%);
-            background-size: 2px 40px; /* 雨滴拉長 */
-            animation: rain-fall 0.3s linear infinite; /* 快速落下 */
-        }
-        @keyframes rain-fall {
-            0% { background-position: 0 0; }
-            100% { background-position: 10px 40px; }
-        }
-
-        /* 3. 下雪模式 (Snow) */
-        header.weather-snow .header-bg-effect {
-            opacity: 0.9 !important;
-            background-image: 
-                radial-gradient(rgba(255,255,255,0.9) 2px, transparent 3px),
-                radial-gradient(rgba(255,255,255,0.6) 1px, transparent 2px);
-            background-size: 100px 100px, 150px 150px;
-            animation: snow-fall 8s linear infinite; /* 緩慢飄落 */
-        }
-        @keyframes snow-fall {
-            0% { background-position: 0 0, 0 0; }
-            100% { background-position: 20px 100px, -20px 150px; }
-        }
-
-        /* 4. 多雲/陰天模式 (Cloud) */
-        header.weather-cloud .header-bg-effect {
-            opacity: 0.5 !important;
-            /* 使用大柔焦圓形模擬雲層飄過 */
-            background-image: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.4), transparent 70%);
-            background-size: 150% 100%; 
-            animation: cloud-move 15s ease-in-out infinite alternate;
-        }
-        @keyframes cloud-move {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 100% 50%; }
-        }
-
-        /* 晚上時顯示星星 */
-        header.is-night .header-bg-effect {
-            opacity: 0.8; 
+            opacity: 0.8;
         }
 
         /* 確保原本的標題內容浮在星星之上 */
