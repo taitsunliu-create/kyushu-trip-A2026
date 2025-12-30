@@ -1490,17 +1490,40 @@ header.is-night {
 }
 
 /* [雲朵飄動] */
-.cloud-fog {
+/* [雲朵飄動 - 新版] */
+.cloud-shape {
     position: absolute;
-    width: 300px; height: 300px;
-    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
-    top: -50px; left: -50px;
-    filter: blur(20px);
-    animation: cloud-move 20s infinite alternate;
+    width: 100px; height: 40px;
+    background: rgba(255, 255, 255, 0.8); /* 提高白度，讓它更明顯 */
+    border-radius: 50px; /* 圓角膠囊狀 */
+    top: 20px;
+    filter: blur(5px); /* 輕微柔焦就好，不要太糊 */
+    animation: cloud-float linear infinite;
+    z-index: 2; /* 確保有一點層次 */
 }
-@keyframes cloud-move {
-    from { transform: translateX(0); }
-    to { transform: translateX(50px); }
+
+/* 利用偽元素製作雲的凸起造型 */
+.cloud-shape::after, .cloud-shape::before {
+    content: '';
+    position: absolute;
+    background: inherit;
+    border-radius: 50%;
+}
+.cloud-shape::after {
+    width: 45px; height: 45px;
+    top: -25px; left: 15px;
+}
+.cloud-shape::before {
+    width: 35px; height: 35px;
+    top: -15px; left: 45px;
+}
+
+/* 定義雲朵從左飄到右的動畫 */
+@keyframes cloud-float {
+    0% { left: -150px; opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.8; }
+    100% { left: 100%; opacity: 0; } /* 飄出螢幕右邊 */
 }
 /* [太陽光暈] */
 .sun-glow {
