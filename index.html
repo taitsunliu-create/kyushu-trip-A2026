@@ -4303,7 +4303,8 @@ function getSmartAdviceText(temp, weatherCode) {
         const url = `https://places.googleapis.com/v1/places:searchNearby`;
         const body = {
             includedTypes: validTypes,
-            maxResultCount: 1, // 我們只需要最接近的那一個
+            maxResultCount: 3, // [修改] 增加數量，避免只抓到熱門地標
+            rankPreference: "DISTANCE", // [新增] 關鍵！強制依「物理距離」排序，解決正中日蓋過盛群的問題
             locationRestriction: {
                 circle: {
                     center: { latitude: centerLat, longitude: centerLng },
