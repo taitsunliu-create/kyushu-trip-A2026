@@ -1433,6 +1433,94 @@
     letter-spacing: 1px;
 }
 /* --- [新增] 住宿頁面優化樣式 End --- */
+  /* --- [新增] iOS 天氣動態特效 (仿 iPhone 天氣) --- */
+/* 1. Header 容器設定 */
+header {
+    position: relative;
+    overflow: hidden;
+    transition: background 1.0s ease-in-out; /* 背景色切換時的柔和過渡 */
+    z-index: 1;
+}
+
+/* 2. 特效層 (放在文字下方) */
+.weather-bg-layer {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1; 
+    pointer-events: none;
+}
+
+/* --- 天氣背景色 (參考您的截圖配色) --- */
+/* 晴天: 亮藍漸層 */
+header.w-sun { background: linear-gradient(180deg, #2980B9 0%, #6DD5FA 100%); }
+/* 多雲: 灰藍漸層 */
+header.w-cloud { background: linear-gradient(180deg, #536976 0%, #292E49 100%); }
+/* 雨天: 深灰藍 (參考截圖1) */
+header.w-rain { background: linear-gradient(180deg, #373B44 0%, #4286f4 100%); }
+/* 雪天: 冰霜淺藍 (參考截圖2) */
+header.w-snow { background: linear-gradient(180deg, #83a4d4 0%, #b6fbff 100%); }
+/* 霧/陰天: 迷霧灰 */
+header.w-fog { background: linear-gradient(180deg, #757F9A 0%, #D7DDE8 100%); }
+
+/* 晚上模式 (權重最高，覆蓋以上顏色，但保留粒子特效) */
+header.is-night {
+    background: linear-gradient(180deg, #0f2027 0%, #203a43 50%, #2c5364 100%) !important;
+}
+
+/* --- 粒子動畫定義 --- */
+/* [雨滴] */
+.rain-drop {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.3);
+    width: 1px; height: 60px;
+    top: -60px;
+    animation: rain-fall 0.7s linear infinite;
+}
+@keyframes rain-fall {
+    to { transform: translateY(400px); }
+}
+
+/* [雪花] */
+.snow-flake {
+    position: absolute;
+    background: #FFF;
+    border-radius: 50%;
+    opacity: 0.8;
+    top: -10px;
+    animation: snow-fall linear infinite;
+}
+@keyframes snow-fall {
+    0% { transform: translateY(0) translateX(0); opacity: 0.8; }
+    100% { transform: translateY(300px) translateX(20px); opacity: 0; }
+}
+
+/* [雲朵飄動] */
+.cloud-fog {
+    position: absolute;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+    top: -50px; left: -50px;
+    filter: blur(20px);
+    animation: cloud-move 20s infinite alternate;
+}
+@keyframes cloud-move {
+    from { transform: translateX(0); }
+    to { transform: translateX(50px); }
+}
+/* [太陽光暈] */
+.sun-glow {
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 250px; height: 250px;
+    background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(30px);
+    animation: sun-breath 4s infinite ease-in-out;
+}
+@keyframes sun-breath {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+}
   </style>
 </head>
 <body>
@@ -1527,7 +1615,7 @@
         </defs>
     </svg>
     <header>
-    <div class="header-bg-effect"></div>
+    <div id="weather-effect-layer" class="weather-bg-layer"></div>
 
     <div class="header-content">
         <div class="header-title-area">
@@ -3720,6 +3808,7 @@ async function updateWeatherWidget(dayId) {
     const finalIcon = validIcons.includes(iconType) ? iconType : 'cloud';
     
     document.getElementById('hw-icon').innerHTML = `<div class="weather-icon ${finalIcon}"></div>`;
+    setWeatherEffect(finalIcon);
 }
 // [修改] 智慧判斷函式：改用「真實溫度」生成動態建議
 // [修改] 智慧判斷函式：加入 10 分鐘快取機制
@@ -6090,6 +6179,60 @@ function compressImage(file, maxWidth, quality) {
             btn.classList.remove('copied');
         }, 2000);
     }
+    // [新增] 切換 Header 背景與粒子特效
+function setWeatherEffect(iconType) {
+    const header = document.querySelector('header');
+    const layer = document.getElementById('weather-effect-layer');
+    if (!header || !layer) return;
+
+    // 1. 重置所有天氣 class (保留 is-night)
+    header.classList.remove('w-sun', 'w-cloud', 'w-rain', 'w-snow', 'w-fog');
+    layer.innerHTML = ''; // 清空舊粒子
+
+    // 2. 根據圖示類型套用對應特效
+    // 對應您的 validIcons: 'sun', 'cloud', 'cloud-sun', 'snow', 'rain', 'fog', 'lightning'
+    
+    if (iconType === 'sun') {
+        header.classList.add('w-sun');
+        layer.innerHTML = '<div class="sun-glow"></div>'; // 加入太陽光暈
+    } 
+    else if (iconType === 'cloud' || iconType === 'cloud-sun') {
+        header.classList.add('w-cloud');
+        // 加入兩團霧氣模擬雲
+        layer.innerHTML = '<div class="cloud-fog" style="top:-50px; left:-50px;"></div><div class="cloud-fog" style="top:20px; right:-100px; animation-duration:25s;"></div>';
+    }
+    else if (iconType === 'rain' || iconType === 'lightning') {
+        header.classList.add('w-rain');
+        // 生成 20 滴雨
+        let html = '';
+        for(let i=0; i<20; i++) {
+            const left = Math.floor(Math.random() * 100);
+            const delay = (Math.random()).toFixed(2);
+            const dur = (0.5 + Math.random() * 0.3).toFixed(2);
+            html += `<div class="rain-drop" style="left:${left}%; animation-delay:${delay}s; animation-duration:${dur}s;"></div>`;
+        }
+        layer.innerHTML = html;
+    }
+    else if (iconType === 'snow') {
+        header.classList.add('w-snow');
+        // 生成 15 片雪花
+        let html = '';
+        for(let i=0; i<15; i++) {
+            const left = Math.floor(Math.random() * 100);
+            const delay = (Math.random() * 5).toFixed(2);
+            const size = 3 + Math.floor(Math.random() * 5);
+            html += `<div class="snow-flake" style="left:${left}%; width:${size}px; height:${size}px; animation-delay:${delay}s;"></div>`;
+        }
+        layer.innerHTML = html;
+    }
+    else if (iconType === 'fog') {
+        header.classList.add('w-fog');
+        layer.innerHTML = '<div class="cloud-fog" style="width:100%; height:100%; opacity:0.5;"></div>';
+    }
+    else {
+        header.classList.add('w-cloud'); // 預設
+    }
+}
     // --- PWA Service Worker Registration ---
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
