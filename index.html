@@ -4409,7 +4409,7 @@ function getSmartAdviceText(temp, weatherCode) {
                     if (!locationName) {
                         console.log("OSM 無地標名，啟用 Google Places 救援...");
                         // 呼叫我們剛剛新增的輔助函式
-                        const googlePlaces = await fetchGooglePlaces(lat, lon, 100); 
+                        const googlePlaces = await fetchGooglePlaces(lat, lon, 50); 
                         
                         if (googlePlaces.length > 0 && googlePlaces[0].displayName) {
                             locationName = googlePlaces[0].displayName.text;
