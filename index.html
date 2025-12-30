@@ -6216,8 +6216,16 @@ function setWeatherEffect(iconType) {
     } 
     else if (iconType === 'cloud' || iconType === 'cloud-sun') {
         header.classList.add('w-cloud');
-        // 加入兩團霧氣模擬雲
-        layer.innerHTML = '<div class="cloud-fog" style="top:-50px; left:-50px;"></div><div class="cloud-fog" style="top:20px; right:-100px; animation-duration:25s;"></div>';
+        
+        // [修改] 生成 3 朵不同大小、速度的雲
+        // animation-duration 控制飄動速度 (越小越快)
+        // transform: scale() 控制大小
+        // top 控制高度
+        layer.innerHTML = `
+            <div class="cloud-shape" style="top: 15%; animation-duration: 25s; transform: scale(0.8);"></div>
+            <div class="cloud-shape" style="top: 30%; animation-duration: 35s; animation-delay: -10s; transform: scale(1.2); opacity: 0.6;"></div>
+            <div class="cloud-shape" style="top: 50%; animation-duration: 45s; animation-delay: -5s; transform: scale(1.0); opacity: 0.4;"></div>
+        `;
     }
     else if (iconType === 'rain' || iconType === 'lightning') {
         header.classList.add('w-rain');
