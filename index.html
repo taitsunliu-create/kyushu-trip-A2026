@@ -6250,49 +6250,39 @@ function setWeatherEffect(iconType) {
     else if (iconType === 'cloud' || iconType === 'cloud-sun') {
         header.classList.add('w-cloud');
         
-        // [優化版] 壯闊雲海配置：利用透明度與速度差製造「空間感」
-        layer.innerHTML = `
-            <div class="cloud-shape" style="
-                top: 5%; 
-                transform: scale(3); 
-                animation-duration: 20s; 
-                opacity: 0.3; /* 讓它淡一點，才不會像假塑膠 */
-                z-index: 1;">
-            </div>
+        const isNight = header.classList.contains('is-night');
+        
+        // [關鍵修改] 設定日夜不同的透明度
+        // 白天：雲朵不透明度高 (0.85)，看起來白白胖胖
+        // 晚上：雲朵不透明度低 (0.4)，看起來像夜空中的陰影
+        const mainOp = isNight ? 0.4 : 0.85; 
+        const bgOp = isNight ? 0.1 : 0.3;    // 背景大雲更淡
+        
+        let content = '';
 
-            <div class="cloud-shape" style="
-                top: 25%; 
-                transform: scale(1.8); 
-                animation-duration: 35s; 
-                animation-delay: -5s; 
-                opacity: 0.85;">
-            </div>
+        // [新增] 如果是「晚上多雲」，在雲層後方加一點稀疏的星星
+        if (isNight) {
+            // 生成 15 顆星星 (比晴天的 60 顆少，營造被雲遮擋的感覺)
+            for(let i=0; i<15; i++) {
+                const left = Math.floor(Math.random() * 100);
+                const top = Math.floor(Math.random() * 80);
+                const size = (Math.random() * 2).toFixed(1);
+                // 閃爍速度設慢一點，營造寧靜感
+                const dur = (Math.random() * 3 + 3).toFixed(1); 
+                content += `<div class="star-particle" style="left:${left}%; top:${top}%; width:${size}px; height:${size}px; animation-duration:${dur}s; opacity: 0.6;"></div>`;
+            }
+        }
 
-            <div class="cloud-shape" style="
-                top: 45%; 
-                width: 140px; /* 拉長一點 */
-                transform: scale(1.6); 
-                animation-duration: 45s; 
-                animation-delay: -20s; 
-                opacity: 0.7;">
-            </div>
-
-            <div class="cloud-shape" style="
-                top: 65%; 
-                transform: scale(2.0); 
-                animation-duration: 60s; 
-                animation-delay: -10s; 
-                opacity: 0.4;">
-            </div>
-
-            <div class="cloud-shape" style="
-                top: 10%; 
-                transform: scale(0.8); 
-                animation-duration: 80s; 
-                animation-delay: -40s; 
-                opacity: 0.4;">
-            </div>
+        // 雲朵層 (HTML 結構不變，但 style 裡的 opacity 換成了變數)
+        content += `
+            <div class="cloud-shape" style="top: 5%; transform: scale(3); animation-duration: 20s; opacity: ${bgOp}; z-index: 1;"></div>
+            <div class="cloud-shape" style="top: 25%; transform: scale(1.8); animation-duration: 35s; animation-delay: -5s; opacity: ${mainOp};"></div>
+            <div class="cloud-shape" style="top: 45%; width: 140px; transform: scale(1.6); animation-duration: 45s; animation-delay: -20s; opacity: ${mainOp * 0.8};"></div>
+            <div class="cloud-shape" style="top: 65%; transform: scale(2.0); animation-duration: 60s; animation-delay: -10s; opacity: ${bgOp};"></div>
+            <div class="cloud-shape" style="top: 10%; transform: scale(0.8); animation-duration: 80s; animation-delay: -40s; opacity: ${bgOp};"></div>
         `;
+        
+        layer.innerHTML = content;
     }
     else if (iconType === 'rain' || iconType === 'lightning') {
         header.classList.add('w-rain');
@@ -6322,7 +6312,12 @@ function setWeatherEffect(iconType) {
     }
     else if (iconType === 'fog') {
         header.classList.add('w-fog');
-        layer.innerHTML = '<div class="cloud-fog" style="width:100%; height:100%; opacity:0.5;"></div>';
+        
+        // [關鍵修改] 晚上霧氣要更稀薄，才不會變成「整片白牆」
+        // 白天 0.5 -> 晚上 0.2
+        const fogOp = header.classList.contains('is-night') ? 0.2 : 0.5;
+        
+        layer.innerHTML = `<div class="cloud-fog" style="width:100%; height:100%; opacity:${fogOp};"></div>`;
     }
     else {
         header.classList.add('w-cloud'); // 預設
