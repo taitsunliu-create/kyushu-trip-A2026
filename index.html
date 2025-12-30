@@ -278,6 +278,51 @@
             padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; cursor: pointer;
             display: flex; align-items: center; gap: 4px;
         }
+        /* [新增] 動態日夜背景特效 */
+        header {
+            /* 預設(白天): 原本的明亮藍色漸層 */
+            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            transition: background 1.5s ease; /* 顏色切換時有呼吸感 */
+            overflow: hidden; /* 防止星星超出範圍 */
+            position: relative; /* 確保特效層定位正確 */
+        }
+
+        /* 晚上的背景: 深邃的午夜藍 */
+        header.is-night {
+            background: linear-gradient(135deg, #0f172a, #1e3a8a);
+        }
+
+        /* 星星層 (預設隱藏) */
+        .header-bg-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* 確保不擋住按鈕點擊 */
+            z-index: 0; /* 在內容之下 */
+            opacity: 0;
+            transition: opacity 1.5s ease;
+            
+            /* 利用 CSS 徑向漸層畫出星星 */
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            background-position: 0 0, 40px 60px, 130px 270px;
+        }
+
+        /* 晚上時顯示星星 */
+        header.is-night .header-bg-effect {
+            opacity: 0.8; 
+        }
+
+        /* 確保原本的標題內容浮在星星之上 */
+        .header-content {
+            position: relative;
+            z-index: 2; 
+        }
 /* --- 插入結束 --- */
 
         .float-note-btn:active { transform: scale(0.95); }
@@ -1482,9 +1527,11 @@
         </defs>
     </svg>
     <header>
-        <div class="header-content">
-            <div class="header-title-area">
-                <h1>九州親子自駕遊</h1>
+    <div class="header-bg-effect"></div>
+
+    <div class="header-content">
+        <div class="header-title-area">
+            <h1>九州親子自駕遊</h1>
                 <div class="subtitle">2026/01/25 - 01/30 (6天5夜)</div>
                 <div class="badge-trip">親子自由行 • 熊本進福岡出</div>
             </div>
