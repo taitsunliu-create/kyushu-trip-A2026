@@ -6539,14 +6539,28 @@ function setWeatherEffect(iconType) {
             html += `<div class="glass-drop" style="left:${left}%; top:${top}%; width:${size}px; height:${size}px; border-radius:${borderRadius};"></div>`;
         }
         
-        // 3. [前景] 偶爾滑落的水珠 (長條形)
-        for(let i=0; i<6; i++) {
+        // 3. [前景] 偶爾滑落的水珠 (高隨機版)
+        // 增加數量到 8 顆，但利用極大的延遲時間讓它們錯開，才不會同時出現
+        for(let i=0; i<8; i++) {
             const left = Math.random() * 100;
-            const delay = (Math.random() * 5).toFixed(1);
-            const dur = (Math.random() * 2 + 3).toFixed(1);
-            const w = (Math.random() * 4 + 4).toFixed(1);
-            // 滑落的水珠通常比較長且圓潤
-            html += `<div class="glass-drop trickle" style="left:${left}%; width:${w}px; height:${w*1.5}px; animation-delay:${delay}s; animation-duration:${dur}s; border-radius: 50% 50% 40% 40%;"></div>`;
+            
+            // [關鍵] 延遲時間拉大到 0~15秒，打破規律感
+            // 負數延遲 (-5 ~ 10) 可以讓部分水珠一開始就在滑落途中，不用等
+            const delay = (Math.random() * 20 - 5).toFixed(1); 
+            
+            // [關鍵] 滑落速度差異拉大 (2秒快 ~ 7秒慢)
+            const dur = (Math.random() * 5 + 2).toFixed(1);
+            
+            // 寬度 3~7px
+            const w = (Math.random() * 4 + 3).toFixed(1);
+            
+            // [關鍵] 高度拉長倍率隨機 (1.5倍 ~ 4倍)，有的像水滴，有的像水痕
+            const h = (w * (Math.random() * 2.5 + 1.5)).toFixed(1);
+            
+            // 隨機透明度，讓有些水痕比較明顯，有些比較淡
+            const opacity = (Math.random() * 0.3 + 0.5).toFixed(2); // 0.5~0.8
+
+            html += `<div class="glass-drop trickle" style="left:${left}%; width:${w}px; height:${h}px; animation-delay:${delay}s; animation-duration:${dur}s; opacity:${opacity}; border-radius: 50% 50% 40% 40%;"></div>`;
         }
         html += '</div>';
 
