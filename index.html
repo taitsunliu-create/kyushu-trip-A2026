@@ -1492,7 +1492,39 @@ header.is-night {
 @keyframes rain-fall {
     to { transform: translateY(400px); }
 }
+/* --- [新] 玻璃水珠特效 (Glass Rain) --- */
+.glass-surface {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 10; /* 在最上層 */
+    overflow: hidden;
+    pointer-events: none;
+}
 
+.glass-drop {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    box-shadow: 
+        inset 1px 1px 2px rgba(255, 255, 255, 0.7), 
+        inset -1px -1px 2px rgba(0, 0, 0, 0.3),
+        1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 滑落動畫 */
+.glass-drop.trickle {
+    width: 6px; height: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 40%;
+    animation: trickle-down 6s linear infinite;
+}
+
+@keyframes trickle-down {
+    0% { transform: translateY(-20px) scaleX(1); opacity: 0; }
+    10% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(600px) scaleX(0.8); opacity: 0; }
+}
 /* [雪花 - SVG 精緻版] */
 .snow-flake {
     position: absolute;
@@ -6462,14 +6494,35 @@ function setWeatherEffect(iconType) {
     }
     else if (iconType === 'rain' || iconType === 'lightning') {
         header.classList.add('w-rain');
-        // 生成 20 滴雨
+        
         let html = '';
-        for(let i=0; i<20; i++) {
+        
+        // 1. [背景] 原本的空中落雨 (增加到 40 滴，讓雨勢明顯一點)
+        for(let i=0; i<40; i++) {
             const left = Math.floor(Math.random() * 100);
-            const delay = (Math.random()).toFixed(2);
-            const dur = (0.5 + Math.random() * 0.3).toFixed(2);
+            const delay = (Math.random() * 2).toFixed(2);
+            const dur = (0.5 + Math.random() * 0.4).toFixed(2);
             html += `<div class="rain-drop" style="left:${left}%; animation-delay:${delay}s; animation-duration:${dur}s;"></div>`;
         }
+
+        // 2. [前景] 玻璃表面的靜態水珠 (Glass Droplets)
+        html += '<div class="glass-surface">';
+        for(let i=0; i<30; i++) {
+            const left = Math.random() * 100;
+            const top = Math.random() * 100;
+            const size = (Math.random() * 5 + 3).toFixed(1); // 大小 3~8px
+            html += `<div class="glass-drop" style="left:${left}%; top:${top}%; width:${size}px; height:${size}px;"></div>`;
+        }
+        
+        // 3. [前景] 會滑落的水珠 (Trickle)
+        for(let i=0; i<5; i++) {
+            const left = Math.random() * 100;
+            const delay = (Math.random() * 5).toFixed(1);
+            const dur = (Math.random() * 2 + 4).toFixed(1); // 4~6秒滑落
+            html += `<div class="glass-drop trickle" style="left:${left}%; animation-delay:${delay}s; animation-duration:${dur}s;"></div>`;
+        }
+        html += '</div>'; // 結束 glass-surface
+
         layer.innerHTML = html;
     }
     else if (iconType === 'snow') {
