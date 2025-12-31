@@ -3874,16 +3874,6 @@ async function updateWeatherWidget(dayId) {
     document.getElementById('hw-range').innerText = data.range;
     document.getElementById('hw-advice').innerText = data.advice;
     
-    // ★★★ [新增] 依據旅遊地的時間，切換 Header 背景 ★★★
-    const header = document.querySelector('header');
-    if (typeof data.isDay !== 'undefined') {
-        if (data.isDay === 0) {
-            header.classList.add('is-night'); // 旅遊地現在是晚上 -> 變黑
-        } else {
-            header.classList.remove('is-night'); // 旅遊地現在是白天 -> 變亮
-        }
-    }
-    
     // 處理 Icon
     const iconType = data.icon || 'cloud';
     // 如果是 API 回傳的，我們只給代碼 (如 sun, cloud, rain)，如果沒對應到就給 cloud
@@ -3922,54 +3912,54 @@ async function getSmartWeatherData(config) {
         
         const index = json.daily.time.indexOf(config.dateStr);
         let displayData = {};
-        
-        // ★★★ [新增] 取得旅遊地當下的日夜狀態 (0或1) ★★★
-        const destIsDay = json.current_weather.is_day; 
 
-        // 資料解析邏輯 (保留您原本的文字判斷，只插入 isDay)
+        // 資料解析邏輯 (維持原本不變)
         if (config.dateStr === todayStr) {
-            // (情境1: 行程當天) -> 顯示 (即時)
             const current = json.current_weather;
+            const todayMax = json.daily.temperature_2m_max[0];
+            const todayMin = json.daily.temperature_2m_min[0];
+
             displayData = {
-                temp: `${Math.round(current.temperature)}°C`,
+                temp: `${Math.round(current.temperature)}°C`, 
+                range: `${Math.round(todayMin)}°C ~ ${Math.round(todayMax)}°C`,
+                desc: getWeatherDescText(current.weathercode),
                 icon: getWeatherIconClass(current.weathercode),
-                desc: getWeatherDesc(current.weathercode),
-                advice: `(即時) ${getSmartAdviceText(current.temperature, current.weathercode)}`,
-                isDay: destIsDay // [新增]
+                advice: `(即時) ${getSmartAdviceText(current.temperature, current.weathercode)}`
             };
         } 
         else if (index !== -1) {
-            // (情境2: 行程未來/預報) -> 顯示 (預報)
-            const minT = Math.round(json.daily.temperature_2m_min[index]);
-            const maxT = Math.round(json.daily.temperature_2m_max[index]);
-            const avgTemp = Math.round((minT + maxT) / 2);
             const code = json.daily.weathercode[index];
+            const max = json.daily.temperature_2m_max[index];
+            const min = json.daily.temperature_2m_min[index];
+            const avgTemp = (max + min) / 2;
+            
             displayData = {
-                temp: `${avgTemp}°C`,
+                temp: `${Math.round(avgTemp)}°C`,
+                range: `${Math.round(min)}°C ~ ${Math.round(max)}°C`,
+                desc: getWeatherDescText(code),
                 icon: getWeatherIconClass(code),
-                desc: getWeatherDesc(code),
-                advice: `(預報) ${getSmartAdviceText(avgTemp, code)}`,
-                isDay: destIsDay // [新增]
+                advice: `(預報) ${getSmartAdviceText(avgTemp, code)}`
             };
         } 
         else {
-            // (情境3: 行前/無資料) -> 顯示 (行前參考)
+            // 若超出預報範圍 (例如7天後)，顯示當下天氣作為參考
             const current = json.current_weather;
+            const todayMax = json.daily.temperature_2m_max[0];
+            const todayMin = json.daily.temperature_2m_min[0];
             displayData = {
                 temp: `${Math.round(current.temperature)}°C`,
+                range: `${Math.round(todayMin)}°C ~ ${Math.round(todayMax)}°C`,
+                desc: getWeatherDescText(current.weathercode),
                 icon: getWeatherIconClass(current.weathercode),
-                desc: getWeatherDesc(current.weathercode),
-                advice: `(行前參考) ${getSmartAdviceText(current.temperature, current.weathercode)}`,
-                isDay: destIsDay // [新增]
+                advice: `(行前參考) ${getSmartAdviceText(current.temperature, current.weathercode)}`
             };
         }
         
         return displayData;
 
-   } catch (e) {
+    } catch (e) {
         console.error("API 獲取失敗", e);
-        // [修改] 失敗時，預設 isDay: 1 (白天) 避免程式報錯
-        return { ...config.backup, desc: config.backup.desc + ' (離線)', advice: '網路連線異常。', isDay: 1 };
+        return { ...config.backup, desc: config.backup.desc + ' (離線)', advice: '網路連線異常，顯示離線資料。' };
     }
 }
 
@@ -4364,9 +4354,7 @@ function getSmartAdviceText(temp, weatherCode) {
                             temp: currentMyTemp, 
                             city: displayZh, 
                             code: code,
-                            timezone: localTimezone, // [新增] 儲存時區
-                            // ★★★ [新增] 這一行：把日夜狀態存起來 (0=黑夜, 1=白天) ★★★
-                            isDay: weatherData.current_weather.is_day
+                            timezone: localTimezone // [新增] 儲存時區
                         }
                     };
                     const targetTempStr = document.getElementById('wc-temp') ? document.getElementById('wc-temp').innerText : '--°';
@@ -5059,9 +5047,6 @@ function resetShareButton(btn) {
                 // Closing the current day
                 timeline.classList.remove('show');
                 toggleElement.classList.remove('open');
-                
-                // ★★★ [新增] 關閉時：還原回預設/我的位置天氣 ★★★
-                resetToDefaultView();
             }
         }
 
@@ -6281,52 +6266,7 @@ function compressImage(file, maxWidth, quality) {
 window.currentWeatherIcon = 'cloud'; 
 
 // [修改] 原本的 setWeatherEffect 函式
-function resetToDefaultView() {
-    const header = document.querySelector('header');
-    
-    // 1. 還原標題文字 (還原成預設顯示)
-    document.getElementById('hw-loc').innerText = '熊本市'; 
-    document.getElementById('hw-date').innerText = '1/25 (Day 1)';
-    
-    // 2. 還原背景與特效 (依據「我的位置」的快取資料)
-    if (window.appCache && window.appCache['my_location_combined']) {
-        const myData = window.appCache['my_location_combined'].data;
-        
-        // 更新溫度 (從快取讀取)
-        if (document.getElementById('hw-temp')) {
-            document.getElementById('hw-temp').innerText = `${Math.round(myData.temp)}°C`;
-        }
-        // 更新描述 (使用 innerHTML 因為您的描述包含 SVG 圖示)
-        if (document.getElementById('hw-desc')) {
-            document.getElementById('hw-desc').innerHTML = getWeatherDesc(myData.code); 
-        }
-
-        // 還原日夜背景 (0=黑夜)
-        if (myData.isDay === 0) {
-            header.classList.add('is-night');
-        } else {
-            header.classList.remove('is-night');
-        }
-        
-        // 還原天氣圖示
-        const myIcon = getWeatherIconClass(myData.code); 
-        document.getElementById('hw-icon').innerHTML = `<div class="weather-icon ${myIcon}"></div>`;
-        
-        // 呼叫特效 (使用全域函式)
-        if (window.setWeatherEffect) window.setWeatherEffect(myIcon);
-        
-    } else {
-        // 如果還沒定位成功，就還原成預設值
-        header.classList.remove('is-night');
-        document.getElementById('hw-temp').innerText = '10°C';
-        document.getElementById('hw-desc').innerText = '晴時多雲';
-        if (window.setWeatherEffect) window.setWeatherEffect('cloud');
-    }
-}
-/* ▲▲▲▲▲ [插入結束] ▲▲▲▲▲ */
-
-// [修改] 務必加上 window. 讓它變成全域函式，這樣 resetToDefaultView 才能呼叫它！
-window.setWeatherEffect = function(iconType) {
+function setWeatherEffect(iconType) {
     // ★★★ [插入這行] 記住現在的天氣圖示，以便日夜切換後重繪 ★★★
     window.currentWeatherIcon = iconType;
 
