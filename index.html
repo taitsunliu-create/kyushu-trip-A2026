@@ -1562,6 +1562,21 @@ header.is-night {
             55% { transform: translateY(0) scale(1); opacity: 1; }     /* 慢慢流進畫面 */
             100% { transform: translateY(600px) scale(1); opacity: 0; } /* 快速滑落 */
         }
+        /* [新] 被水流帶走(融合)的效果 */
+.glass-drop.merged {
+    transform: scale(0.2) translateY(20px); /* 縮小並稍微往下被帶走 */
+    opacity: 0;
+    transition: all 0.3s ease-out; /* 0.3秒內快速消失 */
+}
+
+/* [新] 純滑落動畫 (給 JavaScript 控制生成的動態水流使用) */
+/* 不需要等待，生成後直接滑落，這樣方便我們計算碰撞時間 */
+@keyframes rain-slide-linear {
+    0% { transform: translateY(-50px); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(600px); opacity: 0; } 
+}
 /* [雪花 - SVG 精緻版] */
 .snow-flake {
     position: absolute;
@@ -3773,7 +3788,22 @@ header.is-night {
 
        // [修改] 原本的 const apiKey = ""; 替換成以下內容：
 
+// [新增] 雨滴特效計時器管理 (避免切換分頁時殘留)
+window.rainTimers = []; // 存放所有 setTimeout
+window.rainInterval = null; // 存放主要的 setInterval
 
+function clearRainTimers() {
+    // 清除所有預定的碰撞事件
+    if (window.rainTimers) {
+        window.rainTimers.forEach(t => clearTimeout(t));
+        window.rainTimers = [];
+    }
+    // 停止生成新水流
+    if (window.rainInterval) {
+        clearInterval(window.rainInterval);
+        window.rainInterval = null;
+    }
+}
 // [修改] 1. 定義兩組加密亂碼 (請將您的 AES 加密字串分別填入)
 // 用於 Gemini AI 對話、翻譯
 const encryptedGeminiKey = "U2FsdGVkX1/64ozwLOVc7Q7oTx058ndDWtXLLJ6Ri7cafbqjyyabFrsg2GixFXZV8bGjn7m7O7ZkH4CKCQjIjA=="; 
@@ -6530,54 +6560,132 @@ function setWeatherEffect(iconType) {
         layer.innerHTML = content;
     }
     else if (iconType === 'rain' || iconType === 'lightning') {
-        header.classList.add('w-rain');
-        
-        let html = '';
-        
-        // 1. [背景] 空中落下的雨滴 (維持 40 滴)
-        for(let i=0; i<40; i++) {
-            const left = Math.floor(Math.random() * 100);
-            const delay = (Math.random() * 2).toFixed(2);
-            const dur = (0.5 + Math.random() * 0.4).toFixed(2);
-            html += `<div class="rain-drop" style="left:${left}%; animation-delay:${delay}s; animation-duration:${dur}s;"></div>`;
+        // 1. 先清除舊的計時器，避免疊加 (這是最重要的步驟，防止記憶體洩漏)
+        if (typeof clearRainTimers === 'function') {
+            clearRainTimers();
         }
-
-        // 2. [前景] 靜態與動態水珠組合
-        html += '<div class="glass-surface">';
         
-        // A. 靜態小水珠 (背景雜訊，約 30 顆) - 這些是不會動的殘留水珠
-        for(let i=0; i<30; i++) {
+        header.classList.add('w-rain');
+        layer.innerHTML = ''; // 清空舊圖層
+
+        // 2. [背景] 空中落下的雨絲 (保持不變)
+        const rainContainer = document.createElement('div');
+        for(let i=0; i<40; i++) {
+            const drop = document.createElement('div');
+            drop.className = 'rain-drop';
+            drop.style.left = `${Math.floor(Math.random() * 100)}%`;
+            drop.style.animationDelay = `${(Math.random() * 2).toFixed(2)}s`;
+            drop.style.animationDuration = `${(0.5 + Math.random() * 0.4).toFixed(2)}s`;
+            rainContainer.appendChild(drop);
+        }
+        layer.appendChild(rainContainer);
+
+        // 3. [前景] 玻璃容器
+        const glassSurface = document.createElement('div');
+        glassSurface.className = 'glass-surface';
+        layer.appendChild(glassSurface);
+
+        // 4. 生成「靜態水珠」 (獵物)
+        // 我們把這些水珠存起來，等等讓動態水流去偵測
+        const staticDrops = [];
+        for (let i = 0; i < 45; i++) { // 稍微增加一點數量到 45
+            const drop = document.createElement('div');
             const left = Math.random() * 100;
-            const top = Math.random() * 100;
-            const size = (Math.random() * 5 + 3).toFixed(1); // 小顆一點
+            const top = Math.random() * 95; // 分佈在整個版面
+            const size = (Math.random() * 6 + 3).toFixed(1);
             
-            // 隨機形狀 (圓形/橢圓)
+            drop.className = 'glass-drop';
+            drop.style.left = `${left}%`;
+            drop.style.top = `${top}%`;
+            drop.style.width = `${size}px`;
+            drop.style.height = `${size}px`;
+            
+            // 隨機形狀
             const r1 = Math.floor(40 + Math.random() * 40);
             const r2 = Math.floor(40 + Math.random() * 40);
-            const radius = `${r1}% ${100-r1}% ${r2}% ${100-r2}%`;
+            drop.style.borderRadius = `${r1}% ${100-r1}% ${r2}% ${100-r2}%`;
 
-            html += `<div class="glass-drop" style="left:${left}%; top:${top}%; width:${size}px; height:${size}px; border-radius:${radius};"></div>`;
+            // ★ 關鍵：將座標存入 dataset 方便後續計算
+            drop.dataset.x = left;
+            drop.dataset.y = top;
+            
+            glassSurface.appendChild(drop);
+            staticDrops.push(drop);
         }
 
-        // B. [關鍵] 滑落的長條水流 (模擬連帶下落的水痕，約 12 條)
-        for(let i=0; i<12; i++) {
-            const left = Math.random() * 100;
+        // 5. [核心] 定時生成「動態水流」並計算碰撞 (獵人)
+        const spawnTrickler = () => {
+            const trickler = document.createElement('div');
             
-            // 寬度窄 (3~5px)，高度極長 (60~150px) -> 形成長長的水痕
-            const w = (Math.random() * 2 + 3).toFixed(1); 
-            const h = (Math.random() * 90 + 60).toFixed(1); 
+            // 隨機起始位置
+            const tLeft = Math.random() * 96 + 2; // 避免太靠邊緣
+            const tDuration = Math.random() * 1.5 + 2.5; // 2.5~4秒滑完 (稍微慢一點點讓你看清楚碰撞)
+            const tHeight = Math.random() * 60 + 60; // 水流長度 60~120px
             
-            // 動畫設定
-            const dur = (Math.random() * 10 + 5).toFixed(1); // 5~15秒一次
-            const delay = (Math.random() * -15).toFixed(1);  // 隨機進度
-            const opacity = (Math.random() * 0.3 + 0.5).toFixed(2); // 不要太透明
+            trickler.className = 'glass-drop trickle';
+            trickler.style.left = `${tLeft}%`;
+            trickler.style.top = '0%'; // 從頂部開始
+            trickler.style.width = '4px';
+            trickler.style.height = `${tHeight}px`;
+            
+            // 使用新定義的「不等待」動畫
+            trickler.style.animationName = 'rain-slide-linear'; 
+            trickler.style.animationDuration = `${tDuration}s`;
+            trickler.style.animationTimingFunction = 'linear'; // 線性速度方便計算
+            
+            glassSurface.appendChild(trickler);
 
-            // 注意：這裡移除了 border-radius 的隨機設定，改用 CSS 統一的長條導角
-            html += `<div class="glass-drop trickle" style="left:${left}%; top:0; width:${w}px; height:${h}px; animation-duration:${dur}s; animation-delay:${delay}s; opacity:${opacity};"></div>`;
-        }
-        html += '</div>';
+            // --- 碰撞偵測運算 ---
+            // 檢查所有靜態水珠，看看誰擋在路徑上
+            staticDrops.forEach(staticDrop => {
+                // 如果已經被吃掉了，就跳過
+                if (staticDrop.classList.contains('merged')) return;
 
-        layer.innerHTML = html;
+                const sLeft = parseFloat(staticDrop.dataset.x);
+                const sTop = parseFloat(staticDrop.dataset.y);
+
+                // 判斷 X 軸距離 (水流寬度約 1-2%，我們抓左右 3% 的範圍，讓碰撞容易一點)
+                if (Math.abs(sLeft - tLeft) < 3) {
+                    // ★ 命中！計算水流何時會流到這個 Y 高度
+                    // 公式：時間 = 總時間 * (水珠高度 / 100)
+                    // 乘以 0.85 是為了讓它在水流「前端」碰到時就消失，而不是等水流過完
+                    const hitTime = (tDuration * 1000) * (sTop / 100) * 0.85;
+
+                    // 設定定時器：時間一到，水珠就被「吃掉」(加上 merged class)
+                    const timer = setTimeout(() => {
+                        if (staticDrop) staticDrop.classList.add('merged');
+                        
+                        // (選用) 3秒後在隨機位置重生，避免螢幕上的水珠越來越少
+                        const respawnTimer = setTimeout(() => {
+                            if (!glassSurface.contains(staticDrop)) return;
+                            staticDrop.classList.remove('merged');
+                            const newLeft = Math.random() * 100;
+                            const newTop = Math.random() * 95;
+                            staticDrop.style.left = `${newLeft}%`;
+                            staticDrop.style.top = `${newTop}%`;
+                            staticDrop.dataset.x = newLeft;
+                            staticDrop.dataset.y = newTop;
+                        }, 3000);
+                        
+                        if (window.rainTimers) window.rainTimers.push(respawnTimer);
+
+                    }, hitTime);
+                    
+                    if (window.rainTimers) window.rainTimers.push(timer);
+                }
+            });
+
+            // 動畫結束後移除水流元素，釋放記憶體
+            const cleanup = setTimeout(() => {
+                trickler.remove();
+            }, tDuration * 1000);
+            
+            if (window.rainTimers) window.rainTimers.push(cleanup);
+        };
+
+        // 啟動生成器：每 1.2 秒生成一道新水流
+        spawnTrickler(); // 立即生成一個
+        window.rainInterval = setInterval(spawnTrickler, 1200);
     }
     else if (iconType === 'fog') {
         header.classList.add('w-fog');
