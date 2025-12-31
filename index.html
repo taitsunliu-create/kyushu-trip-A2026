@@ -6498,16 +6498,21 @@ window.currentWeatherIcon = 'cloud';
 
 // [修改] 原本的 setWeatherEffect 函式
 function setWeatherEffect(iconType) {
-    // ★★★ [插入這行] 記住現在的天氣圖示，以便日夜切換後重繪 ★★★
+    // 1. [關鍵新增] 無論切換到哪種天氣，先強制關閉之前的物理引擎
+    // 這能確保雨天特效不會在晴天、陰天或霧天時繼續在背景運算
+    if (typeof clearRainTimers === 'function') {
+        clearRainTimers(); 
+    }
+
+    // 2. 記住現在的天氣圖示，以便日夜切換後重繪
     window.currentWeatherIcon = iconType;
 
     const header = document.querySelector('header');
     const layer = document.getElementById('weather-effect-layer');
     if (!header || !layer) return;
 
-    // 1. 重置所有天氣 class (保留 is-night)
-    header.classList.remove('w-sun', 'w-cloud', 'w-rain', 'w-snow', 'w-fog');
-    layer.innerHTML = ''; // 清空舊粒子
+    // 3. 重置所有天氣 class (保留 is-night)
+    header.classList.remove('w-sun', 'w-cloud', 'w-rain', 'w-snow', 'w-fog');    layer.innerHTML = ''; // 清空舊粒子
 
     // 2. 根據圖示類型套用對應特效
     // 對應您的 validIcons: 'sun', 'cloud', 'cloud-sun', 'snow', 'rain', 'fog', 'lightning'
