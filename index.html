@@ -1581,18 +1581,62 @@ header.is-night {
     100% { left: 100%; opacity: 0; } /* 飄出螢幕右邊 */
 }
 /* [太陽光暈] */
+/* [太陽光暈 - 強烈照射版] */
 .sun-glow {
     position: absolute;
-    top: -60px; right: -60px;
-    width: 250px; height: 250px;
-    background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+    /* 1. 調整位置：稍微往右上角外推，模擬陽光從角落射入 */
+    top: -120px; 
+    right: -120px;
+    
+    /* 2. 加大範圍：讓光芒覆蓋半個 Header */
+    width: 450px; 
+    height: 450px;
+    
+    /* 3. 強化顏色：核心純白 -> 中層金黃 -> 外層透明 */
+    background: radial-gradient(circle, 
+        rgba(255, 255, 255, 0.95) 10%,   /* 核心極亮 */
+        rgba(253, 224, 71, 0.6) 35%,     /* 中層暖黃光 */
+        rgba(255, 255, 255, 0.1) 60%,    /* 外層柔光 */
+        transparent 75%
+    );
+    
     border-radius: 50%;
-    filter: blur(30px);
-    animation: sun-breath 4s infinite ease-in-out;
+    /* 4. 增加模糊度，讓光線更柔和自然 */
+    filter: blur(40px);
+    
+    /* 5. 混合模式：讓光疊加在藍色背景上更耀眼 */
+    mix-blend-mode: screen;
+    
+    animation: sun-breath 5s infinite ease-in-out;
+    z-index: 1; /* 確保在背景之上 */
+    pointer-events: none; /* 讓點擊穿透 */
 }
+
+/* 加入第二層光暈 (利用偽元素)，製造光線擴散感 */
+.sun-glow::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 140%; height: 140%; /* 比本體更大 */
+    
+    background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
+    border-radius: 50%;
+    filter: blur(20px);
+    
+    /* 獨立的呼吸動畫，錯開時間 */
+    animation: sun-pulse-slow 7s infinite ease-in-out;
+}
+
+/* 呼吸動畫定義 */
 @keyframes sun-breath {
-    0%, 100% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.1); opacity: 0.8; }
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.15); opacity: 1; } /* 變大且變亮 */
+}
+
+@keyframes sun-pulse-slow {
+    0%, 100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.3; }
+    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.6; }
 }
   </style>
 </head>
