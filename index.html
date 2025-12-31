@@ -3881,7 +3881,58 @@ async function updateWeatherWidget(dayId) {
     const finalIcon = validIcons.includes(iconType) ? iconType : 'cloud';
     
     document.getElementById('hw-icon').innerHTML = `<div class="weather-icon ${finalIcon}"></div>`;
-    setWeatherEffect(finalIcon);
+    // ... 前面是 document.getElementById('hw-icon').innerHTML = ...
+
+    // ★★★ [新增 Start] 依據日本當地的 isDay 切換 Header 背景 ★★★
+    const header = document.querySelector('header');
+    
+    // 如果 API 有回傳 isDay (代表是即時資料)，就用它判斷
+    if (data.isDay !== undefined) {
+        if (data.isDay === 0) {
+            header.classList.add('is-night'); // 切換為黑夜
+        } else {
+            header.classList.remove('is-night'); // 切換為白天
+        }
+    } else {
+        // 如果是未來預報或離線資料，通常預設顯示白天比較美觀
+        header.classList.remove('is-night');
+    }
+    // ★★★ [新增 End] ★★★
+
+    setWeatherEffect(finalIcon); 
+}
+// ★★★ [新增函式] 當行程摺頁全關閉時，還原回「我的位置」天氣與特效
+function resetHeaderToLocal() {
+    // 1. 檢查是否有快取的定位資料
+    if (!window.appCache || !window.appCache['my_location_combined']) {
+        return; // 還沒定位過就不動作
+    }
+
+    const cached = window.appCache['my_location_combined'].data;
+    const header = document.querySelector('header');
+
+    // 2. 還原文字資訊
+    document.getElementById('hw-loc').innerText = cached.city;
+    document.getElementById('hw-date').innerText = '現在位置'; 
+    document.getElementById('hw-temp').innerText = `${Math.round(cached.temp)}°C`;
+    document.getElementById('hw-desc').innerText = getWeatherDescText(cached.code);
+    document.getElementById('hw-range').innerText = ''; 
+    document.getElementById('hw-advice').innerText = '顯示您所在地的即時天氣。';
+
+    // 3. 還原日夜背景 (關鍵)
+    if (cached.isDay === 0) {
+        header.classList.add('is-night');
+    } else {
+        header.classList.remove('is-night');
+    }
+
+    // 4. 還原天氣圖示與特效
+    const iconType = getWeatherIconClass(cached.code);
+    document.getElementById('hw-icon').innerHTML = `<div class="weather-icon ${iconType}"></div>`;
+    
+    if (typeof setWeatherEffect === 'function') {
+        setWeatherEffect(iconType);
+    }
 }
 // [修改] 智慧判斷函式：改用「真實溫度」生成動態建議
 // [修改] 智慧判斷函式：加入 10 分鐘快取機制
@@ -3924,7 +3975,8 @@ async function getSmartWeatherData(config) {
                 range: `${Math.round(todayMin)}°C ~ ${Math.round(todayMax)}°C`,
                 desc: getWeatherDescText(current.weathercode),
                 icon: getWeatherIconClass(current.weathercode),
-                advice: `(即時) ${getSmartAdviceText(current.temperature, current.weathercode)}`
+                advice: `(即時) ${getSmartAdviceText(current.temperature, current.weathercode)}`,
+                isDay: current.is_day // ★ 新增這行：回傳日本當地的日夜
             };
         } 
         else if (index !== -1) {
@@ -4312,7 +4364,9 @@ function getSmartAdviceText(temp, weatherCode) {
                     currentMyTemp = weatherData.current_weather.temperature;
                     const tempStr = `${Math.round(currentMyTemp)}°C`;
                     const code = weatherData.current_weather.weathercode;
-                    
+                    // ★★★ [新增 Start] 捕捉日夜狀態 ★★★
+                    const localIsDay = weatherData.current_weather.is_day; // 1=白, 0=夜
+                    // ★★★ [新增 End] ★★★
                     // [新增] 取得 API 回傳的當地時區 (例如 "Asia/Tokyo")
                     const localTimezone = weatherData.timezone;
                     
@@ -4354,9 +4408,22 @@ function getSmartAdviceText(temp, weatherCode) {
                             temp: currentMyTemp, 
                             city: displayZh, 
                             code: code,
-                            timezone: localTimezone // [新增] 儲存時區
+                            timezone: localTimezone,
+                            isDay: localIsDay // ★ 重點：這裡多存了一個欄位
                         }
                     };
+                    
+                    // ★★★ [新增] 若目前沒有任何行程被打開，就直接套用這裡的日夜特效
+                    if (!document.querySelector('.timeline.show')) {
+                        const header = document.querySelector('header');
+                        if (localIsDay === 0) header.classList.add('is-night');
+                        else header.classList.remove('is-night');
+                        
+                        // 重繪特效
+                        if (typeof setWeatherEffect === 'function') {
+                             setWeatherEffect(getWeatherIconClass(code));
+                        }
+                    }
                     const targetTempStr = document.getElementById('wc-temp') ? document.getElementById('wc-temp').innerText : '--°';
                     if (targetTempStr !== '--°') updateComparison(parseFloat(targetTempStr));
 
@@ -5044,10 +5111,16 @@ function resetShareButton(btn) {
                 // Update Weather!
                 updateWeatherWidget(id);
             } else {
-                // Closing the current day
-                timeline.classList.remove('show');
-                toggleElement.classList.remove('open');
-            }
+        // Closing the current day
+        timeline.classList.remove('show');
+        toggleElement.classList.remove('open');
+        
+        // ★★★ [修改] 檢查是否還有其他摺頁是開著的？
+        // 如果沒有任何 .timeline.show 了，代表全部關閉 -> 還原回我的位置
+        if (!document.querySelector('.timeline.show')) {
+            resetHeaderToLocal();
+        }
+    }
         }
 
         // AI Functions - UI Interaction Part
