@@ -1528,30 +1528,32 @@ header.is-night {
         }
 
         /* [修改] 滑落的水流 (模擬拖尾水痕) - 長條漸層 */
+        /* [修改] 滑落的水流 (模擬拖尾水痕) - 高透明度寫實版 */
         .glass-drop.trickle {
-            /* 1. 關鍵：使用線性漸層，由上(透明)到下(實心) */
-            /* 模擬上方是殘留的水痕，下方是匯集的大水珠 */
+            /* 1. 關鍵：使用線性漸層，大幅提高透明度 */
             background: linear-gradient(to bottom, 
-                rgba(255, 255, 255, 0) 0%, 
-                rgba(255, 255, 255, 0.1) 20%, /* 淡淡的水痕 */
-                rgba(255, 255, 255, 0.6) 90%, /* 匯集的亮點 */
-                rgba(255, 255, 255, 0.9) 100% /* 水珠頭部 */
+                rgba(255, 255, 255, 0) 0%,     /* 完全透明的尾端 */
+                rgba(255, 255, 255, 0.05) 30%, /* 極淡的水痕軌跡 */
+                rgba(255, 255, 255, 0.2) 85%,  /* 稍微明顯的身體 */
+                rgba(255, 255, 255, 0.4) 100%  /* 半透明的水珠頭部 */
             );
             
-            /* 2. 形狀：改為長條圓角，不再是正圓 */
+            /* 2. 形狀：改為長條圓角 */
             border-radius: 50px; 
             
-            /* 3. 陰影：只需要左右邊緣的光澤，增加立體感 */
+            /* 3. 陰影：降低邊緣光澤強度，使其更柔和自然 */
             box-shadow: 
-                inset 1px 0 2px rgba(255, 255, 255, 0.5),
-                inset -1px 0 2px rgba(0, 0, 0, 0.1);
+                inset 0.5px 0 3px rgba(255, 255, 255, 0.3), /* 更淡的邊緣反光 */
+                inset -0.5px 0 2px rgba(0, 0, 0, 0.05);     /* 極淡的陰影 */
                 
-            /* 套用動畫 */
+            /* [新增] 微微模糊邊緣，增加液體流動感 */
+            filter: blur(0.5px);
+
+            /* 套用動畫 (維持原樣) */
             animation-name: trickle-wait-drop;
             animation-timing-function: ease-in;
             animation-iteration-count: infinite;
             
-            /* 確保水流在最上層，蓋過靜態水珠，製造「吃掉」的錯覺 */
             z-index: 12; 
         }
 
@@ -6617,49 +6619,46 @@ function setWeatherEffect(iconType) {
             staticDrops.push(drop);
         }
 
-        // 5. [核心] 定時生成「動態水流」並計算碰撞 (獵人)
+        // 5. [核心] 定時生成「動態水流」並計算碰撞
         const spawnTrickler = () => {
             const trickler = document.createElement('div');
             
             // 隨機起始位置
-            const tLeft = Math.random() * 96 + 2; // 避免太靠邊緣
-            const tDuration = Math.random() * 1.5 + 2.5; // 2.5~4秒滑完 (稍微慢一點點讓你看清楚碰撞)
-            const tHeight = Math.random() * 60 + 60; // 水流長度 60~120px
+            const tLeft = Math.random() * 96 + 2; 
+            
+            // ★★★ [修改] 這裡控制速度 ★★★
+            // 原本是 2.5~4秒，現在改為 5~8秒 (數字越大越慢)
+            const tDuration = Math.random() * 3 + 5; 
+            
+            const tHeight = Math.random() * 60 + 60; // 水流長度
             
             trickler.className = 'glass-drop trickle';
             trickler.style.left = `${tLeft}%`;
-            trickler.style.top = '0%'; // 從頂部開始
+            trickler.style.top = '0%'; 
             trickler.style.width = '4px';
             trickler.style.height = `${tHeight}px`;
             
-            // 使用新定義的「不等待」動畫
+            // 設定動畫
             trickler.style.animationName = 'rain-slide-linear'; 
             trickler.style.animationDuration = `${tDuration}s`;
-            trickler.style.animationTimingFunction = 'linear'; // 線性速度方便計算
+            trickler.style.animationTimingFunction = 'linear';
             
             glassSurface.appendChild(trickler);
 
-            // --- 碰撞偵測運算 ---
-            // 檢查所有靜態水珠，看看誰擋在路徑上
+            // --- 碰撞偵測運算 (這裡不需要改，會自動引用新的 tDuration) ---
             staticDrops.forEach(staticDrop => {
-                // 如果已經被吃掉了，就跳過
                 if (staticDrop.classList.contains('merged')) return;
 
                 const sLeft = parseFloat(staticDrop.dataset.x);
                 const sTop = parseFloat(staticDrop.dataset.y);
 
-                // 判斷 X 軸距離 (水流寬度約 1-2%，我們抓左右 3% 的範圍，讓碰撞容易一點)
                 if (Math.abs(sLeft - tLeft) < 3) {
-                    // ★ 命中！計算水流何時會流到這個 Y 高度
-                    // 公式：時間 = 總時間 * (水珠高度 / 100)
-                    // 乘以 0.85 是為了讓它在水流「前端」碰到時就消失，而不是等水流過完
+                    // 因為 tDuration 變長了，這裡的碰撞時間也會自動變準確
                     const hitTime = (tDuration * 1000) * (sTop / 100) * 0.85;
 
-                    // 設定定時器：時間一到，水珠就被「吃掉」(加上 merged class)
                     const timer = setTimeout(() => {
                         if (staticDrop) staticDrop.classList.add('merged');
                         
-                        // (選用) 3秒後在隨機位置重生，避免螢幕上的水珠越來越少
                         const respawnTimer = setTimeout(() => {
                             if (!glassSurface.contains(staticDrop)) return;
                             staticDrop.classList.remove('merged');
@@ -6679,7 +6678,7 @@ function setWeatherEffect(iconType) {
                 }
             });
 
-            // 動畫結束後移除水流元素，釋放記憶體
+            // 清理
             const cleanup = setTimeout(() => {
                 trickler.remove();
             }, tDuration * 1000);
