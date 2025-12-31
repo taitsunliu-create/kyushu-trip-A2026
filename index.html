@@ -1493,38 +1493,54 @@ header.is-night {
     to { transform: translateY(400px); }
 }
 /* --- [新] 玻璃水珠特效 (Glass Rain) --- */
-.glass-surface {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    z-index: 10; /* 在最上層 */
-    overflow: hidden;
-    pointer-events: none;
-}
+/* --- [升級版] 寫實玻璃水珠特效 (Glass Rain) --- */
+        .glass-surface {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; overflow: hidden; pointer-events: none;
+        }
 
-.glass-drop {
-    position: absolute;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 50%;
-    box-shadow: 
-        inset 1px 1px 2px rgba(255, 255, 255, 0.7), 
-        inset -1px -1px 2px rgba(0, 0, 0, 0.3),
-        1px 1px 2px rgba(0, 0, 0, 0.2);
-}
+        .glass-drop {
+            position: absolute;
+            /* 1. 基底改為全透明，不依靠背景色 */
+            background: transparent;
+            
+            /* 2. 複雜陰影：模擬光線折射 (Refraction) 與立體感 */
+            /* 內陰影(亮) + 內陰影(暗) + 外部投影 */
+            box-shadow: 
+                inset 2px 2px 2px rgba(255, 255, 255, 0.4), 
+                inset -2px -2px 5px rgba(0, 0, 0, 0.3),
+                1px 2px 4px rgba(0, 0, 0, 0.3);
+            
+            /* 預設圓角，稍後 JS 會隨機微調 */
+            border-radius: 50%;
+        }
 
-/* 滑落動畫 */
-.glass-drop.trickle {
-    width: 6px; height: 10px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 40%;
-    animation: trickle-down 6s linear infinite;
-}
+        /* 3. [關鍵] 增加高光反射點 (Specular Highlight) - 讓它看起來像水 */
+        .glass-drop::after {
+            content: '';
+            position: absolute;
+            top: 20%; left: 20%;
+            width: 30%; height: 30%;
+            /* 模擬光源反射的小白點 */
+            background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            filter: blur(0.5px);
+        }
 
-@keyframes trickle-down {
-    0% { transform: translateY(-20px) scaleX(1); opacity: 0; }
-    10% { opacity: 1; }
-    80% { opacity: 1; }
-    100% { transform: translateY(600px) scaleX(0.8); opacity: 0; }
-}
+        /* 滑落水珠動畫 */
+        .glass-drop.trickle {
+            background: rgba(255, 255, 255, 0.1); /* 滑動時稍微帶點水痕 */
+            box-shadow: inset 1px 1px 4px rgba(255, 255, 255, 0.4);
+            animation: trickle-down 5s ease-in infinite;
+        }
+
+        @keyframes trickle-down {
+            0% { transform: translateY(-20px) scale(1, 1); opacity: 0; }
+            10% { opacity: 1; transform: translateY(20px) scale(1.1, 0.9); } /* 接觸表面變扁 */
+            80% { opacity: 1; }
+            95% { opacity: 0; transform: translateY(500px) scale(0.9, 1.1); } /* 滑落拉長 */
+            100% { opacity: 0; transform: translateY(550px); }
+        }
 /* [雪花 - SVG 精緻版] */
 .snow-flake {
     position: absolute;
@@ -6497,7 +6513,7 @@ function setWeatherEffect(iconType) {
         
         let html = '';
         
-        // 1. [背景] 原本的空中落雨 (增加到 40 滴，讓雨勢明顯一點)
+        // 1. [背景] 空中落下的雨滴 (數量增加到 40，讓雨勢明顯)
         for(let i=0; i<40; i++) {
             const left = Math.floor(Math.random() * 100);
             const delay = (Math.random() * 2).toFixed(2);
@@ -6505,23 +6521,34 @@ function setWeatherEffect(iconType) {
             html += `<div class="rain-drop" style="left:${left}%; animation-delay:${delay}s; animation-duration:${dur}s;"></div>`;
         }
 
-        // 2. [前景] 玻璃表面的靜態水珠 (Glass Droplets)
+        // 2. [前景] 玻璃表面的靜態水珠 (有機形狀)
         html += '<div class="glass-surface">';
-        for(let i=0; i<30; i++) {
+        for(let i=0; i<35; i++) { // 產生 35 顆
             const left = Math.random() * 100;
-            const top = Math.random() * 100;
-            const size = (Math.random() * 5 + 3).toFixed(1); // 大小 3~8px
-            html += `<div class="glass-drop" style="left:${left}%; top:${top}%; width:${size}px; height:${size}px;"></div>`;
+            const top = Math.random() * 85; // 集中在中上段
+            const size = (Math.random() * 6 + 4).toFixed(1); // 大小 4~10px
+            
+            // ★ 關鍵：隨機產生不規則的圓形 (Blob shape)
+            // 透過設定四個角的半徑不同，製造出液體張力的感覺
+            const r1 = Math.floor(40 + Math.random() * 40); 
+            const r2 = Math.floor(40 + Math.random() * 40);
+            const r3 = Math.floor(40 + Math.random() * 40);
+            const r4 = Math.floor(40 + Math.random() * 40);
+            const borderRadius = `${r1}% ${100-r1}% ${r2}% ${100-r2}% / ${r3}% ${r4}% ${100-r4}% ${100-r3}%`;
+
+            html += `<div class="glass-drop" style="left:${left}%; top:${top}%; width:${size}px; height:${size}px; border-radius:${borderRadius};"></div>`;
         }
         
-        // 3. [前景] 會滑落的水珠 (Trickle)
-        for(let i=0; i<5; i++) {
+        // 3. [前景] 偶爾滑落的水珠 (長條形)
+        for(let i=0; i<6; i++) {
             const left = Math.random() * 100;
             const delay = (Math.random() * 5).toFixed(1);
-            const dur = (Math.random() * 2 + 4).toFixed(1); // 4~6秒滑落
-            html += `<div class="glass-drop trickle" style="left:${left}%; animation-delay:${delay}s; animation-duration:${dur}s;"></div>`;
+            const dur = (Math.random() * 2 + 3).toFixed(1);
+            const w = (Math.random() * 4 + 4).toFixed(1);
+            // 滑落的水珠通常比較長且圓潤
+            html += `<div class="glass-drop trickle" style="left:${left}%; width:${w}px; height:${w*1.5}px; animation-delay:${delay}s; animation-duration:${dur}s; border-radius: 50% 50% 40% 40%;"></div>`;
         }
-        html += '</div>'; // 結束 glass-surface
+        html += '</div>';
 
         layer.innerHTML = html;
     }
