@@ -6693,6 +6693,27 @@ function setWeatherEffect(iconType) {
         window.rainInterval = setInterval(spawnTrickler, 1200);
         runPhysicsLoop(); 
     }
+    else if (iconType === 'snow') {
+        // [重要] 切換到雪天時，務必清除雨天的物理運算
+        if (typeof clearRainTimers === 'function') {
+            clearRainTimers(); 
+        }
+
+        header.classList.add('w-snow');
+        
+        let html = '';
+        // 生成 30 片雪花 (依據您 snowflash 檔案中的設定)
+        for(let i=0; i<30; i++) { 
+            const left = Math.floor(Math.random() * 100);
+            const delay = (Math.random() * 5).toFixed(2);
+            // 讓雪花大小差異大一點 (3px ~ 8px)
+            const size = 3 + Math.floor(Math.random() * 6); 
+            
+            // opacity: 0.9 讓它在淺色背景更清楚
+            html += `<div class="snow-flake" style="left:${left}%; width:${size}px; height:${size}px; animation-delay:${delay}s; opacity: 0.9;"></div>`;
+        }
+        layer.innerHTML = html;
+    }
     else if (iconType === 'fog') {
         header.classList.add('w-fog');
         
