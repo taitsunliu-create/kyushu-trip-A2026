@@ -6533,34 +6533,30 @@ function setWeatherEffect(iconType) {
         }
 
         // 2. [前景] 全動態擬真水珠 (約 40 顆)
-        // 策略：每顆水珠都會滑落，但「等待時間」極度隨機
         html += '<div class="glass-surface">';
         
         for(let i=0; i<40; i++) {
+            // [修改] 水平位置 0% ~ 100% (完全隨機)
             const left = Math.random() * 100;
-            const top = Math.random() * 80; // 初始高度
+            
+            // [修改] 垂直位置 0% ~ 100% (完全隨機，不再只集中在上半部)
+            // 讓有些水珠一開始就附著在畫面下方
+            const top = Math.random() * 100; 
+            
             const size = (Math.random() * 6 + 4).toFixed(1); 
             
-            // 形狀隨機 (不規則圓)
+            // 形狀隨機
             const r1 = Math.floor(40 + Math.random() * 40);
             const r2 = Math.floor(40 + Math.random() * 40);
             const r3 = Math.floor(40 + Math.random() * 40);
             const r4 = Math.floor(40 + Math.random() * 40);
             const radius = `${r1}% ${100-r1}% ${r2}% ${100-r2}% / ${r3}% ${r4}% ${100-r4}% ${100-r3}%`;
 
-            // ★ 關鍵：隨機產生極大差異的動畫週期
-            // Duration (週期): 8秒 ~ 25秒 (代表有的水珠每8秒滑一次，有的要等25秒)
-            // 因為 CSS 設定前 70% 是靜止的，所以週期越長，靜止越久
-            const dur = (Math.random() * 17 + 8).toFixed(1);
-            
-            // Delay (初始進度): -25秒 ~ 0秒
-            // 負數延遲代表「動畫已經跑到一半了」，這樣網頁一打開，有些水珠正在滑，有些正在等，不會全部同時開始
-            const delay = (Math.random() * -25).toFixed(1);
-
-            // Opacity: 隨機透明度，增加層次
+            // 動畫週期與延遲 (維持原本的高隨機設定)
+            const dur = (Math.random() * 15 + 10).toFixed(1); // 10~25秒
+            const delay = (Math.random() * -25).toFixed(1);   // 負數延遲，進場即不同步
             const opacity = (Math.random() * 0.4 + 0.6).toFixed(2);
 
-            // 全部都加上 .trickle 類別，讓它們都會動
             html += `<div class="glass-drop trickle" style="left:${left}%; top:${top}%; width:${size}px; height:${size}px; border-radius:${radius}; animation-duration:${dur}s; animation-delay:${delay}s; opacity:${opacity};"></div>`;
         }
         html += '</div>';
