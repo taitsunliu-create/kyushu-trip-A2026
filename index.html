@@ -1527,30 +1527,40 @@ header.is-night {
             filter: blur(0.5px);
         }
 
-        /* 滑落水珠動畫 */
+        /* [修改] 滑落的水流 (模擬拖尾水痕) - 長條漸層 */
         .glass-drop.trickle {
-            background: rgba(255, 255, 255, 0.1); /* 滑動時稍微帶點水痕 */
-            box-shadow: inset 1px 1px 4px rgba(255, 255, 255, 0.4);
-            animation: trickle-down 5s ease-in infinite;
-        }
-
-        /* [修改] 水珠滑落動畫：加入長達 70% 的靜止等待期 */
-        @keyframes trickle-wait-drop {
-            0% { transform: translateY(0) scale(1); opacity: 1; }
-            /* 關鍵：前 70% 的時間保持不動 (模擬靜止水珠) */
-            70% { transform: translateY(0) scale(1); opacity: 1; } 
-            /* 75%：開始起步，稍微變扁 (蓄力感) */
-            75% { transform: translateY(20px) scale(1.1, 0.9); opacity: 1; }
-            /* 100%：快速滑到底部並消失 */
-            100% { transform: translateY(600px) scale(0.9, 1.1); opacity: 0; }
-        }
-
-        /* 確保所有水珠都套用這個動畫 */
-        .glass-drop.trickle {
-            /* 移除原本的 background 設定，沿用 .glass-drop 的透明質感 */
+            /* 1. 關鍵：使用線性漸層，由上(透明)到下(實心) */
+            /* 模擬上方是殘留的水痕，下方是匯集的大水珠 */
+            background: linear-gradient(to bottom, 
+                rgba(255, 255, 255, 0) 0%, 
+                rgba(255, 255, 255, 0.1) 20%, /* 淡淡的水痕 */
+                rgba(255, 255, 255, 0.6) 90%, /* 匯集的亮點 */
+                rgba(255, 255, 255, 0.9) 100% /* 水珠頭部 */
+            );
+            
+            /* 2. 形狀：改為長條圓角，不再是正圓 */
+            border-radius: 50px; 
+            
+            /* 3. 陰影：只需要左右邊緣的光澤，增加立體感 */
+            box-shadow: 
+                inset 1px 0 2px rgba(255, 255, 255, 0.5),
+                inset -1px 0 2px rgba(0, 0, 0, 0.1);
+                
+            /* 套用動畫 */
             animation-name: trickle-wait-drop;
             animation-timing-function: ease-in;
             animation-iteration-count: infinite;
+            
+            /* 確保水流在最上層，蓋過靜態水珠，製造「吃掉」的錯覺 */
+            z-index: 12; 
+        }
+
+        /* 修正動畫位移量，因為水流變長了，需要滑得更遠 */
+        @keyframes trickle-wait-drop {
+            0% { transform: translateY(-100%) scale(1); opacity: 0; }
+            50% { transform: translateY(-100%) scale(1); opacity: 1; } /* 靜止在畫面外/上方 */
+            55% { transform: translateY(0) scale(1); opacity: 1; }     /* 慢慢流進畫面 */
+            100% { transform: translateY(600px) scale(1); opacity: 0; } /* 快速滑落 */
         }
 /* [雪花 - SVG 精緻版] */
 .snow-flake {
@@ -6532,49 +6542,41 @@ function setWeatherEffect(iconType) {
             html += `<div class="rain-drop" style="left:${left}%; animation-delay:${delay}s; animation-duration:${dur}s;"></div>`;
         }
 
-        // 2. [前景] 全動態擬真水珠 (約 40 顆)
+        // 2. [前景] 靜態與動態水珠組合
         html += '<div class="glass-surface">';
         
-        for(let i=0; i<40; i++) {
-            // [修改] 水平位置 0% ~ 100% (完全隨機)
+        // A. 靜態小水珠 (背景雜訊，約 30 顆) - 這些是不會動的殘留水珠
+        for(let i=0; i<30; i++) {
             const left = Math.random() * 100;
+            const top = Math.random() * 100;
+            const size = (Math.random() * 5 + 3).toFixed(1); // 小顆一點
             
-            // [修改] 垂直位置 0% ~ 100% (完全隨機，不再只集中在上半部)
-            // 讓有些水珠一開始就附著在畫面下方
-            const top = Math.random() * 100; 
-            
-            const size = (Math.random() * 6 + 4).toFixed(1); 
-            
-            // 形狀隨機
+            // 隨機形狀 (圓形/橢圓)
             const r1 = Math.floor(40 + Math.random() * 40);
             const r2 = Math.floor(40 + Math.random() * 40);
-            const r3 = Math.floor(40 + Math.random() * 40);
-            const r4 = Math.floor(40 + Math.random() * 40);
-            const radius = `${r1}% ${100-r1}% ${r2}% ${100-r2}% / ${r3}% ${r4}% ${100-r4}% ${100-r3}%`;
+            const radius = `${r1}% ${100-r1}% ${r2}% ${100-r2}%`;
 
-            // 動畫週期與延遲 (維持原本的高隨機設定)
-            const dur = (Math.random() * 15 + 10).toFixed(1); // 10~25秒
-            const delay = (Math.random() * -25).toFixed(1);   // 負數延遲，進場即不同步
-            const opacity = (Math.random() * 0.4 + 0.6).toFixed(2);
+            html += `<div class="glass-drop" style="left:${left}%; top:${top}%; width:${size}px; height:${size}px; border-radius:${radius};"></div>`;
+        }
 
-            html += `<div class="glass-drop trickle" style="left:${left}%; top:${top}%; width:${size}px; height:${size}px; border-radius:${radius}; animation-duration:${dur}s; animation-delay:${delay}s; opacity:${opacity};"></div>`;
+        // B. [關鍵] 滑落的長條水流 (模擬連帶下落的水痕，約 12 條)
+        for(let i=0; i<12; i++) {
+            const left = Math.random() * 100;
+            
+            // 寬度窄 (3~5px)，高度極長 (60~150px) -> 形成長長的水痕
+            const w = (Math.random() * 2 + 3).toFixed(1); 
+            const h = (Math.random() * 90 + 60).toFixed(1); 
+            
+            // 動畫設定
+            const dur = (Math.random() * 10 + 5).toFixed(1); // 5~15秒一次
+            const delay = (Math.random() * -15).toFixed(1);  // 隨機進度
+            const opacity = (Math.random() * 0.3 + 0.5).toFixed(2); // 不要太透明
+
+            // 注意：這裡移除了 border-radius 的隨機設定，改用 CSS 統一的長條導角
+            html += `<div class="glass-drop trickle" style="left:${left}%; top:0; width:${w}px; height:${h}px; animation-duration:${dur}s; animation-delay:${delay}s; opacity:${opacity};"></div>`;
         }
         html += '</div>';
 
-        layer.innerHTML = html;
-    }
-    else if (iconType === 'snow') {
-        header.classList.add('w-snow');
-        // [修改] 增加雪花數量 (15 -> 30) 並調整樣式
-        let html = '';
-        for(let i=0; i<30; i++) { // 數量變多
-            const left = Math.floor(Math.random() * 100);
-            const delay = (Math.random() * 5).toFixed(2);
-            // 讓雪花大小差異大一點 (3px ~ 8px)
-            const size = 3 + Math.floor(Math.random() * 6); 
-            // [關鍵] 這裡增加了 opacity: 0.9 讓它在淺色背景更清楚
-            html += `<div class="snow-flake" style="left:${left}%; width:${size}px; height:${size}px; animation-delay:${delay}s; opacity: 0.9;"></div>`;
-        }
         layer.innerHTML = html;
     }
     else if (iconType === 'fog') {
