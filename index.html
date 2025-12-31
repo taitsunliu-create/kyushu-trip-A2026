@@ -6619,59 +6619,67 @@ function setWeatherEffect(iconType) {
             staticDrops.push(drop);
         }
 
-        // 5. [核心] 定時生成「動態水流」並計算碰撞
+        // 5. [核心] 定時生成「動態水流」並計算碰撞 (物理修正版)
         const spawnTrickler = () => {
             const trickler = document.createElement('div');
             
             // 隨機起始位置
             const tLeft = Math.random() * 96 + 2; 
             
-            // ★★★ [修改] 這裡控制速度 ★★★
-            // 原本是 2.5~4秒，現在改為 5~8秒 (數字越大越慢)
+            // 下滑速度：5~8秒 (維持您的慢速設定)
             const tDuration = Math.random() * 3 + 5; 
             
-            const tHeight = Math.random() * 60 + 60; // 水流長度
+            // 水流長度：60~100px (稍微縮短一點點，讓頭尾更明確)
+            const tHeight = Math.random() * 40 + 60; 
             
             trickler.className = 'glass-drop trickle';
             trickler.style.left = `${tLeft}%`;
             trickler.style.top = '0%'; 
-            trickler.style.width = '4px';
+            trickler.style.width = '4px'; // 視覺寬度
             trickler.style.height = `${tHeight}px`;
             
-            // 設定動畫
             trickler.style.animationName = 'rain-slide-linear'; 
             trickler.style.animationDuration = `${tDuration}s`;
             trickler.style.animationTimingFunction = 'linear';
             
             glassSurface.appendChild(trickler);
 
-            // --- 碰撞偵測運算 (這裡不需要改，會自動引用新的 tDuration) ---
+            // --- [精密物理碰撞偵測] ---
             staticDrops.forEach(staticDrop => {
                 if (staticDrop.classList.contains('merged')) return;
 
                 const sLeft = parseFloat(staticDrop.dataset.x);
                 const sTop = parseFloat(staticDrop.dataset.y);
 
-                if (Math.abs(sLeft - tLeft) < 3) {
-                    // 因為 tDuration 變長了，這裡的碰撞時間也會自動變準確
-                    const hitTime = (tDuration * 1000) * (sTop / 100) * 0.85;
+                // 修正 1：大幅收窄 X 軸判定範圍
+                // 原本是 3，改成 1.2 (約等於畫面上的 4-5px，與水流寬度相當)
+                // 只有「真的撞到」才會觸發
+                if (Math.abs(sLeft - tLeft) < 1.2) {
+                    
+                    // 修正 2：精算 Y 軸撞擊時間
+                    // 讓消失時間點稍微「延後」，確保視覺上已經覆蓋
+                    // 加上 200ms 的緩衝，模擬水的黏滯感
+                    const hitTime = (tDuration * 1000) * (sTop / 100) * 0.95 + 200;
 
                     const timer = setTimeout(() => {
-                        if (staticDrop) staticDrop.classList.add('merged');
-                        
-                        const respawnTimer = setTimeout(() => {
-                            if (!glassSurface.contains(staticDrop)) return;
-                            staticDrop.classList.remove('merged');
-                            const newLeft = Math.random() * 100;
-                            const newTop = Math.random() * 95;
-                            staticDrop.style.left = `${newLeft}%`;
-                            staticDrop.style.top = `${newTop}%`;
-                            staticDrop.dataset.x = newLeft;
-                            staticDrop.dataset.y = newTop;
-                        }, 3000);
-                        
-                        if (window.rainTimers) window.rainTimers.push(respawnTimer);
-
+                        // 修正 3：加入 10% 的隨機倖存率 (有些水珠太頑固，沖不走)
+                        if (Math.random() > 0.1) {
+                            if (staticDrop) staticDrop.classList.add('merged');
+                            
+                            // 重生邏輯 (維持不變)
+                            const respawnTimer = setTimeout(() => {
+                                if (!glassSurface.contains(staticDrop)) return;
+                                staticDrop.classList.remove('merged');
+                                const newLeft = Math.random() * 100;
+                                const newTop = Math.random() * 95;
+                                staticDrop.style.left = `${newLeft}%`;
+                                staticDrop.style.top = `${newTop}%`;
+                                staticDrop.dataset.x = newLeft;
+                                staticDrop.dataset.y = newTop;
+                            }, Math.random() * 2000 + 2000); // 重生時間也隨機一點
+                            
+                            if (window.rainTimers) window.rainTimers.push(respawnTimer);
+                        }
                     }, hitTime);
                     
                     if (window.rainTimers) window.rainTimers.push(timer);
