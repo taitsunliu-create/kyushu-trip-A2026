@@ -4414,7 +4414,7 @@ function getSmartAdviceText(temp, weatherCode) {
                     };
                     
                     // ★★★ [新增] 若目前沒有任何行程被打開，就直接套用這裡的日夜特效
-                    if (!document.querySelector('.timeline.show')) {
+                    /*if (!document.querySelector('.timeline.show')) {
                         const header = document.querySelector('header');
                         if (localIsDay === 0) header.classList.add('is-night');
                         else header.classList.remove('is-night');
@@ -4423,6 +4423,10 @@ function getSmartAdviceText(temp, weatherCode) {
                         if (typeof setWeatherEffect === 'function') {
                              setWeatherEffect(getWeatherIconClass(code));
                         }
+                    }*/
+                   // ★★★ [修改] 若目前沒有任何行程被打開，直接呼叫還原函式更新「全部介面」(含文字與特效)
+                    if (!document.querySelector('.timeline.show')) {
+                        resetHeaderToLocal(); 
                     }
                     const targetTempStr = document.getElementById('wc-temp') ? document.getElementById('wc-temp').innerText : '--°';
                     if (targetTempStr !== '--°') updateComparison(parseFloat(targetTempStr));
@@ -5949,7 +5953,7 @@ function compressImage(file, maxWidth, quality) {
                     }
                 }
                 // 預設載入 Day 1 天氣資訊供參考
-                //updateWeatherWidget('d1');//
+                /*updateWeatherWidget('d1');*/
 
             } else if (scheduleMap[todayStr]) {
                 // 【情境 B：旅途中】(1/25 ~ 1/30)
@@ -5980,7 +5984,7 @@ function compressImage(file, maxWidth, quality) {
             } else {
                 // 【情境 C：旅程結束】
                 // 全部收合，或視需求顯示
-                //updateWeatherWidget('d1'); // 預設回顯 D1//
+                /*updateWeatherWidget('d1'); // 預設回顯 D1*/
             }
             
             // --- 智慧自動展開邏輯結束 ---
