@@ -4131,9 +4131,12 @@ async function getSmartWeatherData(config) {
                 range: `${Math.round(min)}°C ~ ${Math.round(max)}°C`,
                 desc: getWeatherDescText(code),
                 icon: getWeatherIconClass(code),
-                advice: `(預報) ${getSmartAdviceText(avgTemp, code)}`
+                advice: `(預報) ${getSmartAdviceText(avgTemp, code)}`,
+                // ★★★ [新增] 強制帶入該地點「此時此刻」的日夜狀態 ★★★
+                // 這樣就算查看明天的行程，背景也會反映日本現在是黑夜
+                isDay: json.current_weather.is_day 
             };
-        } 
+        }
         else {
             // 若超出預報範圍 (例如7天後)，顯示當下天氣作為參考
             const current = json.current_weather;
@@ -4144,7 +4147,8 @@ async function getSmartWeatherData(config) {
                 range: `${Math.round(todayMin)}°C ~ ${Math.round(todayMax)}°C`,
                 desc: getWeatherDescText(current.weathercode),
                 icon: getWeatherIconClass(current.weathercode),
-                advice: `(行前參考) ${getSmartAdviceText(current.temperature, current.weathercode)}`
+                advice: `(行前參考) ${getSmartAdviceText(current.temperature, current.weathercode)}`,
+                isDay: current.is_day // ★★★ [新增] 補上這行
             };
         }
         
