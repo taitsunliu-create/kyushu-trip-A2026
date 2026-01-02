@@ -4892,10 +4892,14 @@ function getSmartAdviceText(temp, weatherCode) {
         }
 
         // 抓取即時匯率 (來源: 免費公開 API)
+        // 抓取即時匯率 (來源: 免費公開 API)
         async function fetchLiveRate() {
+            // [修正] 加入檢查
             const statusEl = document.getElementById('rate-status');
-            statusEl.innerText = '⟳ 更新中...';
-            statusEl.style.color = '#F59E0B';
+            if (statusEl) {
+                statusEl.innerText = '⟳ 更新中...';
+                statusEl.style.color = '#F59E0B';
+            }
 
             try {
                 const res = await fetch('https://api.exchangerate-api.com/v4/latest/JPY');
@@ -4914,17 +4918,27 @@ function getSmartAdviceText(temp, weatherCode) {
                 }
             } catch (e) {
                 console.error("匯率更新失敗", e);
-                statusEl.innerText = '⚠️ 連線失敗';
-                statusEl.style.color = '#EF4444';
-                if(!document.getElementById('calc-rate').value) document.getElementById('calc-rate').value = 0.22;
+                // [修正] 加入檢查
+                if (statusEl) {
+                    statusEl.innerText = '⚠️ 連線失敗';
+                    statusEl.style.color = '#EF4444';
+                }
+                // 失敗時若沒值，給個預設值
+                const rateInput = document.getElementById('calc-rate');
+                if(rateInput && !rateInput.value) rateInput.value = 0.22;
             }
         }
 
         function updateRateUI(rate, type) {
-            document.getElementById('calc-rate').value = rate;
+            const rateInput = document.getElementById('calc-rate');
+            if (rateInput) rateInput.value = rate;
+
+            // [修正] 加入檢查：確認 statusEl 存在才更新，避免報錯
             const statusEl = document.getElementById('rate-status');
-            statusEl.innerText = `● ${type}匯率`;
-            statusEl.style.color = '#10B981'; // 綠色
+            if (statusEl) {
+                statusEl.innerText = `● ${type}匯率`;
+                statusEl.style.color = '#10B981'; // 綠色
+            }
         }
 
         // [新增] 計算機變數與邏輯
