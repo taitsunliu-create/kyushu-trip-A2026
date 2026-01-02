@@ -7404,15 +7404,15 @@ async function fetchAndShowDetail(lat, lon, locName) {
 // [修改] 取得標準天氣 SVG 圖示
 // pop: 降雨機率 (決定水位，若為0則純線條)
 // isNight: 是否為晚上 (決定顯示太陽還是月亮)
-// [修改] 優化版：讓雨滴線條更明顯
+// [修改] 取得標準天氣 SVG 圖示
 function getSimpleIconSvg(code, pop, uid, isNight = false) {
     const originalColor = "#374151"; 
     const waterColor = "#60A5FA";    
     const percentage = pop || 0;
     
-    // 1. 定義漸層 (給雲朵本體用)
+    // 1. 定義漸層 (預設給所有圖形使用，但我們可以針對特定線條覆蓋它)
     let defs = '';
-    let strokeAttr = `stroke="${originalColor}"`; // 預設灰色
+    let strokeAttr = `stroke="${originalColor}"`; // 預設純色
 
     if (percentage > 0) {
         defs = `
@@ -7422,6 +7422,7 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
                 <stop offset="${percentage}%" stop-color="${originalColor}" />
             </linearGradient>
         </defs>`;
+        // 若有機率，預設筆畫使用漸層 (這會應用在 path/circle 上)
         strokeAttr = `stroke="url(#grad-${uid})"`;
     }
     
@@ -7433,18 +7434,25 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
     if (code === 0 || code === 1) { 
         // === 晴朗 ===
         if (isNight) {
+            // [月亮] 保持原樣 (漸層應用在整個月亮上)
             path = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
         } else {
-            path = `
-                <circle cx="12" cy="12" r="5"></circle>
-                <line x1="12" y1="1" x2="12" y2="3"></line>
-                <line x1="12" y1="21" x2="12" y2="23"></line>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                <line x1="1" y1="12" x2="3" y2="12"></line>
-                <line x1="21" y1="12" x2="23" y2="12"></line>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            // [太陽] 修改重點：6根光芒 + 只有中間有水位
+            
+            // 2-1. 太陽本體 (圓形)：繼承 strokeAttr (會有漸層水位)
+            path = `<circle cx="12" cy="12" r="5"></circle>`;
+            
+            // 2-2. 太陽光芒 (6根)：強制指定 stroke 為 originalColor (永遠灰色，不變藍)
+            // 使用 rotate 旋轉來畫出均勻的 6 芒星 (每 60 度一根)
+            const rayStyle = `stroke="${originalColor}"`; 
+            
+            path += `
+                <line x1="12" y1="1" x2="12" y2="4" ${rayStyle}></line>
+                <line x1="12" y1="1" x2="12" y2="4" transform="rotate(60 12 12)" ${rayStyle}></line>
+                <line x1="12" y1="1" x2="12" y2="4" transform="rotate(120 12 12)" ${rayStyle}></line>
+                <line x1="12" y1="1" x2="12" y2="4" transform="rotate(180 12 12)" ${rayStyle}></line>
+                <line x1="12" y1="1" x2="12" y2="4" transform="rotate(240 12 12)" ${rayStyle}></line>
+                <line x1="12" y1="1" x2="12" y2="4" transform="rotate(300 12 12)" ${rayStyle}></line>
             `;
         }
     } else if (code === 2 || code === 3) {
@@ -7459,7 +7467,7 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
         `;
     } else if (code >= 51 && code <= 67 || code >= 80) {
         // === 雨 ===
-        // [重點修改] 強制雨滴線條使用藍色 (waterColor)，不使用漸層，讓它看起來更像真的雨
+        // 雨滴強制藍色
         path = `
             <line x1="16" y1="13" x2="16" y2="21" stroke="${waterColor}"></line>
             <line x1="8" y1="13" x2="8" y2="21" stroke="${waterColor}"></line>
