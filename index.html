@@ -3783,12 +3783,13 @@ header.is-night {
             </div>
         </div>
     </div>
-    <div id="calc-modal" class="modal-overlay">
-        <div class="modal-box" style="max-width: 340px; padding: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom:10px; border-bottom:1px solid #eee;">
-                <div class="modal-title" style="margin:0; font-size:1rem; color:#D97706;">
-                    🛍️ 購物計算機
-                </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom:10px; border-bottom:1px solid #eee;">
+                <button id="btn-swap-cur" onclick="toggleCurrency()" style="background:#EFF6FF; border:1px solid #BFDBFE; color:#2563EB; border-radius:20px; padding:5px 12px; font-size:0.85rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                    <span id="cur-label-main">JPY</span> 
+                    <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8M17 8v12M17 20l4-4M17 20l-4-4"/></svg>
+                    <span id="cur-label-sub">TWD</span>
+                </button>
+
                 <div style="display: flex; align-items: center; gap: 5px; font-size: 0.85rem; color: #666;">
                     <label>匯率:</label>
                     <input type="number" id="calc-rate" step="0.0001" style="width: 65px; padding: 4px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-weight:bold; color:#D97706;" oninput="reCalcTotal()">
@@ -4850,19 +4851,30 @@ function getSmartAdviceText(temp, weatherCode) {
         function openCalcModal() {
             document.getElementById('calc-modal').style.display = 'flex';
             
-            // 1. 先嘗試讀取快取 (避免每次開都打 API)
+            // 1. 先嘗試讀取快取
             const savedRateData = JSON.parse(localStorage.getItem('live_exchange_rate_cache') || '{}');
             const now = Date.now();
-            const oneHour = 3600000; // 1小時毫秒數
+            const oneHour = 3600000; 
             
-            // 如果有快取且在 1 小時內，就用快取，否則抓新的
             if (savedRateData.rate && (now - savedRateData.timestamp < oneHour)) {
                 updateRateUI(savedRateData.rate, '快取');
             } else {
                 fetchLiveRate();
             }
             
-            // [新增] 開啟時重置計算機畫面
+            // [新增] 每次開啟預設為 JPY -> TWD 模式
+            if (typeof isJpyToTwd !== 'undefined') {
+                isJpyToTwd = true; 
+                const mainLabel = document.getElementById('cur-label-main');
+                const subLabel = document.getElementById('cur-label-sub');
+                if(mainLabel && subLabel) {
+                    mainLabel.innerText = "JPY";
+                    subLabel.innerText = "TWD";
+                    mainLabel.style.color = "#2563EB";
+                }
+            }
+
+            // 重置計算機畫面
             if (typeof calcInput === 'function') {
                 calcInput('AC');
             }
@@ -4879,29 +4891,24 @@ function getSmartAdviceText(temp, weatherCode) {
             statusEl.style.color = '#F59E0B';
 
             try {
-                // 使用 ExchangeRate-API (以日幣 JPY 為基準)
                 const res = await fetch('https://api.exchangerate-api.com/v4/latest/JPY');
                 const data = await res.json();
-                
-                // 抓取對台幣 (TWD) 的匯率
                 const newRate = data.rates.TWD;
                 
                 if (newRate) {
-                    // 儲存到 LocalStorage
                     localStorage.setItem('live_exchange_rate_cache', JSON.stringify({
                         rate: newRate,
                         timestamp: Date.now()
                     }));
                     updateRateUI(newRate, '即時');
                     
-                   // 如果原本有輸入數字，自動重算 (使用新的計算邏輯)
-                    reCalcTotal();
+                    // [修正] 改呼叫新的重算函式
+                    if (typeof reCalcTotal === 'function') reCalcTotal(); 
                 }
             } catch (e) {
                 console.error("匯率更新失敗", e);
                 statusEl.innerText = '⚠️ 連線失敗';
                 statusEl.style.color = '#EF4444';
-                // 失敗時若沒值，給個預設值
                 if(!document.getElementById('calc-rate').value) document.getElementById('calc-rate').value = 0.22;
             }
         }
@@ -4914,17 +4921,54 @@ function getSmartAdviceText(temp, weatherCode) {
         }
 
         // [新增] 計算機變數與邏輯
-        let calcExpression = ""; // 儲存算式字串 (例如 "100+200")
+        let calcExpression = ""; // 儲存算式字串
+        let isJpyToTwd = true;   // [新增] 預設為 日幣 -> 台幣
 
-        // [新增] 計算機核心處理
+        // [新增] 切換幣別模式
+        function toggleCurrency() {
+            isJpyToTwd = !isJpyToTwd; // 切換狀態
+            
+            // 更新按鈕文字
+            const mainLabel = document.getElementById('cur-label-main');
+            const subLabel = document.getElementById('cur-label-sub');
+            
+            if (isJpyToTwd) {
+                mainLabel.innerText = "JPY";
+                subLabel.innerText = "TWD";
+                mainLabel.style.color = "#2563EB"; // 藍色
+            } else {
+                mainLabel.innerText = "TWD";
+                subLabel.innerText = "JPY";
+                mainLabel.style.color = "#059669"; // 綠色
+            }
+
+            // 更新畫面上的符號並重新計算
+            updateCalcDisplaySymbol();
+            reCalcTotal();
+        }
+
+        // [新增] 更新畫面上的幣別符號
+        function updateCalcDisplaySymbol() {
+            const mainDisplay = document.getElementById('calc-main-display');
+            // 讀取目前的數字 (去掉非數字字元)
+            let currentVal = mainDisplay.innerText.replace(/[^\d.-]/g, '');
+            if (!currentVal) currentVal = "0";
+
+            // 根據模式加上對應符號
+            const symbol = isJpyToTwd ? "¥" : "NT$";
+            mainDisplay.innerText = symbol + currentVal;
+        }
+
+        // [修改] 計算機核心處理
         function calcInput(val) {
             const exprDisplay = document.getElementById('calc-expr-display');
             const mainDisplay = document.getElementById('calc-main-display');
-            
+            const symbol = isJpyToTwd ? "¥" : "NT$"; // 根據模式決定主符號
+
             if (val === 'AC') {
                 calcExpression = "";
                 exprDisplay.innerText = "";
-                mainDisplay.innerText = "¥0";
+                mainDisplay.innerText = symbol + "0";
                 reCalcTotal(0);
                 return;
             }
@@ -4933,17 +4977,15 @@ function getSmartAdviceText(temp, weatherCode) {
                 calcExpression = calcExpression.toString().slice(0, -1);
             } else if (val === '=') {
                 try {
-                    // 安全執行計算 (將 x 換成 *)
                     const safeExpr = calcExpression.replace(/×/g, '*').replace(/÷/g, '/');
-                    // 如果算式為空，不動作
                     if(!safeExpr) return;
                     
-                    const result = eval(safeExpr); // 簡易計算機使用 eval 尚可
+                    const result = eval(safeExpr);
                     
-                    // 顯示結果
-                    mainDisplay.innerText = "¥" + parseFloat(result.toFixed(2));
-                    calcExpression = result.toString(); // 將結果存回，方便繼續計算
-                    exprDisplay.innerText = ""; // 清空過程
+                    // 顯示結果 (加上符號)
+                    mainDisplay.innerText = symbol + parseFloat(result.toFixed(2));
+                    calcExpression = result.toString();
+                    exprDisplay.innerText = ""; 
                     reCalcTotal(result);
                     return;
                 } catch (e) {
@@ -4951,17 +4993,12 @@ function getSmartAdviceText(temp, weatherCode) {
                     calcExpression = "";
                 }
             } else {
-                // 輸入數字或符號
-                // 防止連續輸入運算子
                 const lastChar = calcExpression.slice(-1);
                 const ops = ['+', '-', '*', '/', '.'];
-                
-                // 視覺優化：把 * 顯示為 ×，/ 顯示為 ÷
                 let displayVal = val;
                 if(val === '*') displayVal = '×';
                 if(val === '/') displayVal = '÷';
 
-                // 簡單防呆：如果最後一個是符號，且現在輸入的也是符號，則取代
                 if (ops.includes(val) && ops.includes(lastChar)) {
                     calcExpression = calcExpression.slice(0, -1) + val;
                 } else {
@@ -4969,39 +5006,46 @@ function getSmartAdviceText(temp, weatherCode) {
                 }
             }
 
-            // 更新算式顯示
-            // 將程式用的 * / 替換為視覺用的 × ÷
             exprDisplay.innerText = calcExpression.replace(/\*/g, '×').replace(/\//g, '÷');
             
-            // [即時預覽功能] 如果目前表達式以數字結尾，嘗試試算總額
-            // 這樣不用按等號也能看到目前的加總
             try {
                 const safeExpr = calcExpression.replace(/×/g, '*').replace(/÷/g, '/');
-                // 檢查最後一個字元是否為數字 (避免 100+ 時報錯)
                 if (safeExpr && !['+', '-', '*', '/'].includes(safeExpr.slice(-1))) {
                     const previewRes = eval(safeExpr);
-                    // 這裡不更新 mainDisplay (那是按等號才更新)，只更新台幣換算
-                    // 但如果你希望上面的日幣也即時跳動，可以解除下面註解，看你喜好
-                    // mainDisplay.innerText = "¥" + parseFloat(previewRes.toFixed(2));
                     reCalcTotal(previewRes);
                 }
             } catch(e) {}
         }
 
-        // [新增] 更新台幣換算 (當匯率變動或計算結果變動時呼叫)
+        // [修改] 雙向匯率換算邏輯
         function reCalcTotal(amount = null) {
             const rate = parseFloat(document.getElementById('calc-rate').value) || 0;
             const subDisplay = document.getElementById('calc-sub-display');
             const mainDisplay = document.getElementById('calc-main-display');
 
-            // 如果沒有傳入 amount，則嘗試從畫面上讀取目前的日幣金額
             if (amount === null) {
-                // 去除 ¥ 符號並轉數字
-                amount = parseFloat(mainDisplay.innerText.replace('¥', '')) || 0;
+                // 從畫面讀取數字 (移除 ¥ 或 NT$)
+                amount = parseFloat(mainDisplay.innerText.replace(/[^\d.-]/g, '')) || 0;
             }
 
-            const twd = Math.round(amount * rate);
-            subDisplay.innerText = `≈ NT$${twd.toLocaleString()}`;
+            let resultVal = 0;
+            let resultSymbol = "";
+
+            if (isJpyToTwd) {
+                // 模式：日幣轉台幣 (乘法)
+                // 邏輯：日幣金額 × 匯率(0.22) = 台幣
+                resultVal = Math.round(amount * rate);
+                resultSymbol = "NT$";
+            } else {
+                // 模式：台幣轉日幣 (除法)
+                // 邏輯：台幣金額 ÷ 匯率(0.22) = 日幣
+                if (rate !== 0) {
+                    resultVal = Math.round(amount / rate);
+                }
+                resultSymbol = "¥";
+            }
+
+            subDisplay.innerText = `≈ ${resultSymbol}${resultVal.toLocaleString()}`;
         }
 
 
