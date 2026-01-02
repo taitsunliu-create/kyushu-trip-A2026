@@ -7404,17 +7404,16 @@ async function fetchAndShowDetail(lat, lon, locName) {
 // [修改] 取得標準天氣 SVG 圖示
 // pop: 降雨機率 (決定水位，若為0則純線條)
 // isNight: 是否為晚上 (決定顯示太陽還是月亮)
-// [修改] 取得標準天氣 SVG 圖示 (包含太陽光芒動態切換邏輯)
+// [修改] 優化版：讓雨滴線條更明顯
 function getSimpleIconSvg(code, pop, uid, isNight = false) {
     const originalColor = "#374151"; 
     const waterColor = "#60A5FA";    
     const percentage = pop || 0;
     
-    // 1. 定義漸層 (預設給所有圖形使用)
+    // 1. 定義漸層 (給雲朵本體用)
     let defs = '';
-    let strokeAttr = `stroke="${originalColor}"`; // 預設純色
+    let strokeAttr = `stroke="${originalColor}"`; // 預設灰色
 
-    // 只有當機率 > 0 時，才定義並使用漸層
     if (percentage > 0) {
         defs = `
         <defs>
@@ -7430,45 +7429,23 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
 
     let path = '';
 
-    // 2. 圖示繪製邏輯
+    // 2. 圖示邏輯
     if (code === 0 || code === 1) { 
-        // === 晴朗 / 晴時多雲 ===
+        // === 晴朗 ===
         if (isNight) {
-            // [月亮] 保持原樣 (若有降雨機率，整顆月亮會有水位)
             path = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
         } else {
-            // [太陽] 依據降雨機率切換造型
-            if (percentage > 0) {
-                // === 情況 A: 有降雨機率 (光芒變 6 根，水位只在中間圓) ===
-                
-                // 1. 太陽本體 (圓形)：繼承 strokeAttr (會有漸層藍色水位)
-                path = `<circle cx="12" cy="12" r="5"></circle>`;
-                
-                // 2. 太陽光芒 (6根)：強制指定 stroke 為 originalColor (永遠灰色，不變藍)
-                const rayStyle = `stroke="${originalColor}"`; 
-                path += `
-                    <line x1="12" y1="1" x2="12" y2="4" ${rayStyle}></line>
-                    <line x1="12" y1="1" x2="12" y2="4" transform="rotate(60 12 12)" ${rayStyle}></line>
-                    <line x1="12" y1="1" x2="12" y2="4" transform="rotate(120 12 12)" ${rayStyle}></line>
-                    <line x1="12" y1="1" x2="12" y2="4" transform="rotate(180 12 12)" ${rayStyle}></line>
-                    <line x1="12" y1="1" x2="12" y2="4" transform="rotate(240 12 12)" ${rayStyle}></line>
-                    <line x1="12" y1="1" x2="12" y2="4" transform="rotate(300 12 12)" ${rayStyle}></line>
-                `;
-            } else {
-                // === 情況 B: 0% 降雨機率 (回復原本 8 根光芒，無水位) ===
-                // 因為 percentage 是 0，strokeAttr 已經是 originalColor，所以不用額外設定
-                path = `
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <line x1="12" y1="1" x2="12" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="23"></line>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                    <line x1="1" y1="12" x2="3" y2="12"></line>
-                    <line x1="21" y1="12" x2="23" y2="12"></line>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                `;
-            }
+            path = `
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            `;
         }
     } else if (code === 2 || code === 3) {
         // === 多雲 ===
@@ -7481,7 +7458,8 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
             <line x1="4" y1="10" x2="20" y2="10"></line>
         `;
     } else if (code >= 51 && code <= 67 || code >= 80) {
-        // === 雨 (維持藍色雨滴優化) ===
+        // === 雨 ===
+        // [重點修改] 強制雨滴線條使用藍色 (waterColor)，不使用漸層，讓它看起來更像真的雨
         path = `
             <line x1="16" y1="13" x2="16" y2="21" stroke="${waterColor}"></line>
             <line x1="8" y1="13" x2="8" y2="21" stroke="${waterColor}"></line>
