@@ -1499,6 +1499,7 @@
 }
 /* --- [新增] 住宿頁面優化樣式 End --- */
 /* --- [新增] 詳細天氣 Modal 樣式 --- */
+/* 請確認並修改 .weather-detail-scroll 的內容 */
 .weather-detail-scroll {
     display: flex;
     overflow-x: auto;
@@ -1506,7 +1507,20 @@
     padding: 10px 0;
     margin-bottom: 15px;
     border-bottom: 1px solid #eee;
-    -webkit-overflow-scrolling: touch; /* iOS 滑動順暢 */
+    
+    /* 👇 這是原本就有的，確保 iOS 滑動順暢 */
+    -webkit-overflow-scrolling: touch; 
+    
+    /* 👇 [新增] 限制捲動行為，防止連鎖反應帶動父層 */
+    overscroll-behavior-x: contain; 
+    
+    /* 👇 [新增] 讓滑鼠游標變更，提示可抓取 */
+    cursor: grab;
+}
+
+/* (同時建議在下方加入這行，隱藏醜醜的捲軸但保留功能) */
+.weather-detail-scroll::-webkit-scrollbar {
+    display: none; 
 }
 .wd-hour-item {
     display: flex;
@@ -6338,10 +6352,38 @@ function compressImage(file, maxWidth, quality) {
             };
             img.onerror = (err) => reject(err);
         };
-        reader.onerror = (err) => reject(err);
+       reader.onerror = (err) => reject(err);
     });
 }
-        document.addEventListener('DOMContentLoaded', () => {
+
+// --- 👇 請在此處插入修正衝突的程式碼 👇 ---
+
+// [修正] 防止天氣橫向捲動區與全域換頁手勢衝突
+function preventSwipeConflict() {
+    const scrollContainer = document.getElementById('wd-hourly-list');
+    
+    // 如果找不到元素(例如尚未點開過)則不執行，但在 window load 時通常元素已存在
+    if (!scrollContainer) return;
+
+    // 定義阻擋冒泡的函式
+    const stopPropagation = (e) => {
+        // 關鍵：告訴瀏覽器「事件到此為止」，不要往上傳給翻頁引擎
+        e.stopPropagation(); 
+    };
+
+    // 在該區塊的所有觸控與滑鼠滾輪階段都阻擋冒泡
+    scrollContainer.addEventListener('touchstart', stopPropagation, { passive: true });
+    scrollContainer.addEventListener('touchmove', stopPropagation, { passive: true });
+    scrollContainer.addEventListener('touchend', stopPropagation, { passive: true });
+    scrollContainer.addEventListener('wheel', stopPropagation, { passive: true });
+}
+
+// 確保頁面載入完成後執行綁定
+window.addEventListener('load', preventSwipeConflict);
+
+// --- 👆 插入結束 👆 ---
+
+document.addEventListener('DOMContentLoaded', () => {
             // [新增] 依據 GPS 位置自動判斷日夜 (支援跨時區)
     function initDynamicTheme() {
         const header = document.querySelector('header');
