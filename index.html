@@ -4056,61 +4056,54 @@ header.is-night {
     <div class="modal-box" style="max-width: 400px; padding: 20px; max-height: 85vh; overflow-y: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <div class="modal-title" id="wd-title" style="margin:0; font-size:1.3rem;">--</div>
-            <button onclick="document.getElementById('weather-detail-modal').style.display='none'" style="background:none; border:none; font-size:1.5rem; color:#999;">×</button>
+            <button onclick="document.getElementById('weather-detail-modal').style.display='none'" style="background:none; border:none; font-size:1.5rem; color:#999; cursor: pointer;">×</button>
         </div>
         
         <div class="astro-box">
-    <div class="astro-item">
-        <div class="astro-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <g stroke="#CBD5E1">
-                    <line x1="2" y1="20" x2="22" y2="20" stroke-width="2.5"></line> <line x1="12" y1="7" x2="12" y2="2"></line>
-                    <polyline points="9 5 12 2 15 5"></polyline>
-                </g>
-                
-                <g stroke="#F59E0B">
-                    <path d="M7 20 A 5 5 0 0 1 17 20"></path> 
-                    
-                    <line x1="12" y1="12" x2="12" y2="9"></line> 
-                    
-                    <line x1="6.3" y1="14.3" x2="4.2" y2="12.2"></line>
-                    
-                    <line x1="17.7" y1="14.3" x2="19.8" y2="12.2"></line>
-                    
-                    <line x1="4" y1="20" x2="1" y2="20"></line>
-                    
-                    <line x1="20" y1="20" x2="23" y2="20"></line>
-                </g>
-            </svg>
-        </div>
-        <span class="astro-label">日出</span>
-        <span class="astro-time" id="wd-sunrise">--:--</span>
-    </div>
-    
-    <div style="width: 1px; height: 40px; background: #CBD5E1; opacity: 0.5;"></div>
+            <div class="astro-item">
+                <div class="astro-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <g stroke="#CBD5E1">
+                            <line x1="2" y1="20" x2="22" y2="20" stroke-width="2.5"></line> <line x1="12" y1="7" x2="12" y2="2"></line>
+                            <polyline points="9 5 12 2 15 5"></polyline>
+                        </g>
+                        <g stroke="#F59E0B">
+                            <path d="M7 20 A 5 5 0 0 1 17 20"></path> 
+                            <line x1="12" y1="12" x2="12" y2="9"></line> 
+                            <line x1="6.3" y1="14.3" x2="4.2" y2="12.2"></line>
+                            <line x1="17.7" y1="14.3" x2="19.8" y2="12.2"></line>
+                            <line x1="4" y1="20" x2="1" y2="20"></line>
+                            <line x1="20" y1="20" x2="23" y2="20"></line>
+                        </g>
+                    </svg>
+                </div>
+                <span class="astro-label">日出</span>
+                <span class="astro-time" id="wd-sunrise">--:--</span>
+            </div>
+            
+            <div style="width: 1px; height: 40px; background: #CBD5E1; opacity: 0.5;"></div>
 
-    <div class="astro-item">
-        <div class="astro-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                 <g stroke="#CBD5E1">
-                    <line x1="2" y1="20" x2="22" y2="20" stroke-width="2.5"></line> <line x1="12" y1="2" x2="12" y2="7"></line>
-                    <polyline points="9 4 12 7 15 4"></polyline>
-                </g>
-                
-                <g stroke="#F59E0B">
-                    <path d="M7 20 A 5 5 0 0 1 17 20"></path>
-                    <line x1="12" y1="12" x2="12" y2="9"></line>
-                    <line x1="6.3" y1="14.3" x2="4.2" y2="12.2"></line>
-                    <line x1="17.7" y1="14.3" x2="19.8" y2="12.2"></line>
-                    <line x1="4" y1="20" x2="1" y2="20"></line>
-                    <line x1="20" y1="20" x2="23" y2="20"></line>
-                </g>
-            </svg>
+            <div class="astro-item">
+                <div class="astro-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                         <g stroke="#CBD5E1">
+                            <line x1="2" y1="20" x2="22" y2="20" stroke-width="2.5"></line> <line x1="12" y1="2" x2="12" y2="7"></line>
+                            <polyline points="9 4 12 7 15 4"></polyline>
+                        </g>
+                        <g stroke="#F59E0B">
+                            <path d="M7 20 A 5 5 0 0 1 17 20"></path>
+                            <line x1="12" y1="12" x2="12" y2="9"></line>
+                            <line x1="6.3" y1="14.3" x2="4.2" y2="12.2"></line>
+                            <line x1="17.7" y1="14.3" x2="19.8" y2="12.2"></line>
+                            <line x1="4" y1="20" x2="1" y2="20"></line>
+                            <line x1="20" y1="20" x2="23" y2="20"></line>
+                        </g>
+                    </svg>
+                </div>
+                <span class="astro-label">日落</span>
+                <span class="astro-time" id="wd-sunset">--:--</span>
+            </div>
         </div>
-        <span class="astro-label">日落</span>
-        <span class="astro-time" id="wd-sunset">--:--</span>
-    </div>
-</div>
 
         <div style="font-size: 0.9rem; font-weight: 700; margin-bottom: 5px; color: #4B5563;">未來 24 小時預報</div>
         <div class="weather-detail-scroll" id="wd-hourly-list">
@@ -4118,11 +4111,9 @@ header.is-night {
         </div>
 
         <div style="font-size: 0.9rem; font-weight: 700; margin-top: 10px; margin-bottom: 5px; color: #4B5563;">未來 7 天預報</div>
-        <div id="wd-daily-list">
-            </div>
-
+        <div id="wd-daily-list"></div>
         
-    </div>
+        </div>
 </div>
     <div id="lightbox-modal" class="lightbox-overlay" onclick="closeLightbox()">
         <span class="lightbox-close">&times;</span>
