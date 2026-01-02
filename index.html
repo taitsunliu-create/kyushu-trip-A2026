@@ -242,7 +242,66 @@
         .calc-input { width: 60%; padding: 10px; border: 2px solid #E5E7EB; border-radius: 8px; font-size: 1.2rem; text-align: right; outline: none; }
         .calc-input:focus { border-color: #F59E0B; }
         .calc-label { font-weight: 600; color: #4B5563; }
-
+/* [新增] 計算機專用樣式 (Calculator Style) */
+        .calc-display {
+            background: #F3F4F6;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: right;
+            margin-bottom: 15px;
+            border: 2px solid #E5E7EB;
+        }
+        .calc-expr {
+            font-size: 0.9rem;
+            color: #6B7280;
+            min-height: 1.2em;
+            margin-bottom: 5px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .calc-main {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1F2937;
+            line-height: 1.2;
+        }
+        .calc-sub {
+            font-size: 1rem;
+            color: #059669; /* 綠色顯示台幣 */
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        
+        .calc-keypad {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .calc-btn {
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            padding: 15px 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #374151;
+            cursor: pointer;
+            box-shadow: 0 2px 0 #E5E7EB;
+            transition: all 0.1s;
+            user-select: none;
+        }
+        .calc-btn:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+        .calc-btn.op { color: #2563EB; background: #EFF6FF; }
+        .calc-btn.ac { color: #DC2626; background: #FEF2F2; }
+        .calc-btn.eq { 
+            background: #2563EB; color: white; 
+            grid-column: span 2; /* 等號佔兩格 */
+            border-color: #1D4ED8;
+            box-shadow: 0 2px 0 #1E40AF;
+        }
 /* [新增] 筆記區升級 - 支援圖文混排與放大 */
         .note-editable-box {
             width: 100%;
@@ -3725,29 +3784,42 @@ header.is-night {
         </div>
     </div>
     <div id="calc-modal" class="modal-overlay">
-        <div class="modal-box" style="max-width: 300px;">
-            <div class="modal-title" style="color: #D97706; border-bottom: 1px solid #FDE68A; padding-bottom: 10px;">
-                💱 匯率試算 (JPY ↔ TWD)
-            </div>
-            
-            <div style="margin: 10px 0; font-size: 0.85rem; color: #666; display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
-                <span id="rate-status" style="font-size: 0.75rem; color: #9CA3AF;">● 準備中...</span>
-                <label>匯率:</label>
-                <input type="number" id="calc-rate" step="0.0001" style="width: 70px; padding: 4px; border: 1px solid #ccc; border-radius: 4px; text-align: center;" oninput="calculateExchange()">
-            </div>
-
-            <div class="calc-row">
-                <span class="calc-label">日幣</span>
-                <input type="number" id="inp-jpy" class="calc-input" placeholder="¥" inputmode="decimal" oninput="calculateExchange('jpy')">
+        <div class="modal-box" style="max-width: 340px; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom:10px; border-bottom:1px solid #eee;">
+                <div class="modal-title" style="margin:0; font-size:1rem; color:#D97706;">
+                    🛍️ 購物計算機
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px; font-size: 0.85rem; color: #666;">
+                    <label>匯率:</label>
+                    <input type="number" id="calc-rate" step="0.0001" style="width: 65px; padding: 4px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-weight:bold; color:#D97706;" oninput="reCalcTotal()">
+                </div>
             </div>
 
-            <div class="calc-row">
-                <span class="calc-label">台幣</span>
-                <input type="number" id="inp-twd" class="calc-input" placeholder="NT$" inputmode="decimal" oninput="calculateExchange('twd')">
-            </div>
+            <div class="calc-display">
+                <div class="calc-expr" id="calc-expr-display"></div> <div class="calc-main" id="calc-main-display">¥0</div> <div class="calc-sub" id="calc-sub-display">≈ NT$0</div> </div>
 
-            <div class="modal-btns" style="margin-top: 20px;">
-                <button class="modal-btn btn-confirm" style="background: #F59E0B;" onclick="closeCalcModal()">關閉</button>
+            <div class="calc-keypad">
+                <button class="calc-btn ac" onclick="calcInput('AC')">AC</button>
+                <button class="calc-btn op" onclick="calcInput('DEL')">⌫</button>
+                <button class="calc-btn op" onclick="calcInput('/')">÷</button>
+                <button class="calc-btn op" onclick="calcInput('*')">×</button>
+
+                <button class="calc-btn" onclick="calcInput('7')">7</button>
+                <button class="calc-btn" onclick="calcInput('8')">8</button>
+                <button class="calc-btn" onclick="calcInput('9')">9</button>
+                <button class="calc-btn op" onclick="calcInput('-')">-</button>
+
+                <button class="calc-btn" onclick="calcInput('4')">4</button>
+                <button class="calc-btn" onclick="calcInput('5')">5</button>
+                <button class="calc-btn" onclick="calcInput('6')">6</button>
+                <button class="calc-btn op" onclick="calcInput('+')">+</button>
+
+                <button class="calc-btn" onclick="calcInput('1')">1</button>
+                <button class="calc-btn" onclick="calcInput('2')">2</button>
+                <button class="calc-btn" onclick="calcInput('3')">3</button>
+                <button class="calc-btn eq" onclick="calcInput('=')">=</button> <button class="calc-btn" onclick="calcInput('0')" style="grid-column: span 2;">0</button>
+                <button class="calc-btn" onclick="calcInput('.')">.</button>
+                <button class="calc-btn" style="background:#F9FAFB; border:none; box-shadow:none; cursor:default;" onclick="closeCalcModal()">關閉</button>
             </div>
         </div>
     </div>
@@ -4790,7 +4862,10 @@ function getSmartAdviceText(temp, weatherCode) {
                 fetchLiveRate();
             }
             
-            document.getElementById('inp-jpy').focus();
+            // [新增] 開啟時重置計算機畫面
+            if (typeof calcInput === 'function') {
+                calcInput('AC');
+            }
         }
 
         function closeCalcModal() {
@@ -4838,35 +4913,95 @@ function getSmartAdviceText(temp, weatherCode) {
             statusEl.style.color = '#10B981'; // 綠色
         }
 
-        function calculateExchange(source) {
-            const rateInput = document.getElementById('calc-rate');
-            const jpyInput = document.getElementById('inp-jpy');
-            const twdInput = document.getElementById('inp-twd');
-            
-            let rate = parseFloat(rateInput.value);
-            if (isNaN(rate) || rate <= 0) rate = 0.22; 
+        // [新增] 計算機變數與邏輯
+        let calcExpression = ""; // 儲存算式字串 (例如 "100+200")
 
-            if (source === 'jpy') {
-                const jpy = parseFloat(jpyInput.value);
-                if (!isNaN(jpy)) {
-                    twdInput.value = Math.round(jpy * rate);
-                } else {
-                    twdInput.value = '';
-                }
-            } else if (source === 'twd') {
-                const twd = parseFloat(twdInput.value);
-                if (!isNaN(twd)) {
-                    jpyInput.value = Math.round(twd / rate);
-                } else {
-                    jpyInput.value = '';
+        // [新增] 計算機核心處理
+        function calcInput(val) {
+            const exprDisplay = document.getElementById('calc-expr-display');
+            const mainDisplay = document.getElementById('calc-main-display');
+            
+            if (val === 'AC') {
+                calcExpression = "";
+                exprDisplay.innerText = "";
+                mainDisplay.innerText = "¥0";
+                reCalcTotal(0);
+                return;
+            }
+
+            if (val === 'DEL') {
+                calcExpression = calcExpression.toString().slice(0, -1);
+            } else if (val === '=') {
+                try {
+                    // 安全執行計算 (將 x 換成 *)
+                    const safeExpr = calcExpression.replace(/×/g, '*').replace(/÷/g, '/');
+                    // 如果算式為空，不動作
+                    if(!safeExpr) return;
+                    
+                    const result = eval(safeExpr); // 簡易計算機使用 eval 尚可
+                    
+                    // 顯示結果
+                    mainDisplay.innerText = "¥" + parseFloat(result.toFixed(2));
+                    calcExpression = result.toString(); // 將結果存回，方便繼續計算
+                    exprDisplay.innerText = ""; // 清空過程
+                    reCalcTotal(result);
+                    return;
+                } catch (e) {
+                    mainDisplay.innerText = "Error";
+                    calcExpression = "";
                 }
             } else {
-                // 修改匯率時 -> 更新台幣
-                const jpy = parseFloat(jpyInput.value);
-                if (!isNaN(jpy)) {
-                    twdInput.value = Math.round(jpy * rate);
+                // 輸入數字或符號
+                // 防止連續輸入運算子
+                const lastChar = calcExpression.slice(-1);
+                const ops = ['+', '-', '*', '/', '.'];
+                
+                // 視覺優化：把 * 顯示為 ×，/ 顯示為 ÷
+                let displayVal = val;
+                if(val === '*') displayVal = '×';
+                if(val === '/') displayVal = '÷';
+
+                // 簡單防呆：如果最後一個是符號，且現在輸入的也是符號，則取代
+                if (ops.includes(val) && ops.includes(lastChar)) {
+                    calcExpression = calcExpression.slice(0, -1) + val;
+                } else {
+                    calcExpression += val;
                 }
             }
+
+            // 更新算式顯示
+            // 將程式用的 * / 替換為視覺用的 × ÷
+            exprDisplay.innerText = calcExpression.replace(/\*/g, '×').replace(/\//g, '÷');
+            
+            // [即時預覽功能] 如果目前表達式以數字結尾，嘗試試算總額
+            // 這樣不用按等號也能看到目前的加總
+            try {
+                const safeExpr = calcExpression.replace(/×/g, '*').replace(/÷/g, '/');
+                // 檢查最後一個字元是否為數字 (避免 100+ 時報錯)
+                if (safeExpr && !['+', '-', '*', '/'].includes(safeExpr.slice(-1))) {
+                    const previewRes = eval(safeExpr);
+                    // 這裡不更新 mainDisplay (那是按等號才更新)，只更新台幣換算
+                    // 但如果你希望上面的日幣也即時跳動，可以解除下面註解，看你喜好
+                    // mainDisplay.innerText = "¥" + parseFloat(previewRes.toFixed(2));
+                    reCalcTotal(previewRes);
+                }
+            } catch(e) {}
+        }
+
+        // [新增] 更新台幣換算 (當匯率變動或計算結果變動時呼叫)
+        function reCalcTotal(amount = null) {
+            const rate = parseFloat(document.getElementById('calc-rate').value) || 0;
+            const subDisplay = document.getElementById('calc-sub-display');
+            const mainDisplay = document.getElementById('calc-main-display');
+
+            // 如果沒有傳入 amount，則嘗試從畫面上讀取目前的日幣金額
+            if (amount === null) {
+                // 去除 ¥ 符號並轉數字
+                amount = parseFloat(mainDisplay.innerText.replace('¥', '')) || 0;
+            }
+
+            const twd = Math.round(amount * rate);
+            subDisplay.innerText = `≈ NT$${twd.toLocaleString()}`;
         }
 
 
