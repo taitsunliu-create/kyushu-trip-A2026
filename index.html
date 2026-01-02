@@ -7406,6 +7406,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
 // isNight: 是否為晚上 (決定顯示太陽還是月亮)
 // [修改] 最終完整版：整合太陽光芒切換、藍色雨滴、雷雨雙閃電
 // [修正] 最終除錯版：修復雷雨被誤判為雨天(Code 80+)的問題
+// [修改] 最終版：加入「霧」的水位計支援 + 所有修復
 function getSimpleIconSvg(code, pop, uid, isNight = false) {
     const originalColor = "#374151"; 
     const waterColor = "#60A5FA";    
@@ -7466,25 +7467,18 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
         // === 多雲 ===
         path = `<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>`;
     } else if (code >= 45 && code <= 48) {
-        // === 霧 ===
-        path = `
-            <line x1="4" y1="14" x2="20" y2="14"></line>
-            <line x1="4" y1="18" x2="20" y2="18"></line>
-            <line x1="4" y1="10" x2="20" y2="10"></line>
-        `;
-    } 
-    // [重點修正] 這裡加上了 && code <= 82，避免把 95 吃掉
-    else if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
-        // === 雨 (藍色雨滴) ===
+        // === [修改重點] 霧 ===
+        // 這裡將 3 條分開的 line 合併成一個 path，這樣漸層就會從最底下的線開始往上填滿
+        path = `<path d="M4 10h16 M4 14h16 M4 18h16"></path>`;
+    } else if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
+        // === 雨 ===
         path = `
             <line x1="16" y1="13" x2="16" y2="21" stroke="${waterColor}"></line>
             <line x1="8" y1="13" x2="8" y2="21" stroke="${waterColor}"></line>
             <line x1="12" y1="15" x2="12" y2="23" stroke="${waterColor}"></line>
             <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>
         `;
-    } 
-    // [重點修正] 雪陣雨是 85, 86，這裡也加上限制
-    else if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) {
+    } else if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) {
         // === 雪 ===
         path = `
             <line x1="12" y1="2" x2="12" y2="22"></line>
@@ -7493,9 +7487,9 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
             <line x1="4.93" y1="19.07" x2="19.07" y2="4.93"></line>
         `;
     } else if (code >= 95) {
-        // === 雷雨 (現在終於能跑進來了！) ===
+        // === 雷雨 ===
         path = `<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>`;
-        path += `<polygon points="19 2 16 7 18 7 17 11 22 5 20 5 19 2"></polygon>`;
+       /* path += `<polygon points="19 2 16 7 18 7 17 11 22 5 20 5 19 2"></polygon>`;*/
     } else {
         path = `<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>`;
     }
