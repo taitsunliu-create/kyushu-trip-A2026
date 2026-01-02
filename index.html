@@ -7296,7 +7296,7 @@ async function openDetailedWeatherModal() {
 }
 
 // [修改] 抓取詳細天氣資料 (加入漸層圖示邏輯)
-// [修改] 抓取詳細天氣資料 (小時預報改版：時間/Icon/狀態/氣溫)
+// [修改] 抓取詳細天氣資料 (修正：現在標籤、日夜判斷、標準圖示)
 async function fetchAndShowDetail(lat, lon, locName) {
     // 顯示 Loading
     document.getElementById('weather-detail-modal').style.display = 'flex';
@@ -7312,12 +7312,16 @@ async function fetchAndShowDetail(lat, lon, locName) {
         
         // --- 1. 更新日出日落 ---
         const todayIndex = 0;
-        const sunrise = data.daily.sunrise[todayIndex].split('T')[1];
-        const sunset = data.daily.sunset[todayIndex].split('T')[1];
-        document.getElementById('wd-sunrise').innerText = sunrise;
-        document.getElementById('wd-sunset').innerText = sunset;
+        // 取得日出日落的小時 (例如 06:40 -> 6, 17:20 -> 17) 用於判斷日夜
+        const sunriseStr = data.daily.sunrise[todayIndex].split('T')[1];
+        const sunsetStr = data.daily.sunset[todayIndex].split('T')[1];
+        const sunriseHour = parseInt(sunriseStr.split(':')[0]);
+        const sunsetHour = parseInt(sunsetStr.split(':')[0]);
 
-        // --- 2. 渲染 24小時預報 (新排版) ---
+        document.getElementById('wd-sunrise').innerText = sunriseStr;
+        document.getElementById('wd-sunset').innerText = sunsetStr;
+
+        // --- 2. 渲染 24小時預報 ---
         const hourlyContainer = document.getElementById('wd-hourly-list');
         hourlyContainer.innerHTML = '';
         const currentHour = new Date().getHours();
@@ -7332,25 +7336,27 @@ async function fetchAndShowDetail(lat, lon, locName) {
         for (let i = startIdx; i < startIdx + 24; i++) {
             if (!data.hourly.time[i]) break;
             
-            // [修改] 時間格式：取 HH:00 -> 改為 HH時
-            let hourRaw = data.hourly.time[i].split('T')[1].split(':')[0]; 
-            const timeStr = `${hourRaw}時`; 
+            // 取得該資料的小時數 (0-23)
+            let hourRaw = parseInt(data.hourly.time[i].split('T')[1].split(':')[0]);
+            
+            // [修正 1] 如果是迴圈的第一筆資料，標籤顯示「現在」，否則顯示「XX時」
+            let timeStr = (i === startIdx) ? "現在" : `${hourRaw}時`;
+
+            // [修正 2] 判斷日夜：如果 時間 < 日出 或 時間 >= 日落，就是晚上
+            let isNight = (hourRaw < sunriseHour || hourRaw >= sunsetHour);
 
             const temp = Math.round(data.hourly.temperature_2m[i]);
             const code = data.hourly.weathercode[i];
             
-            // [修改] 傳入 0 作為機率，讓 SVG 不顯示藍色水位
-            const iconSvg = getSimpleIconSvg(code, 0, `h${i}`); 
-            
-            // [新增] 取得天氣狀態文字
+            // [修正 3] 機率傳入 0 (不顯示水位)，並傳入 isNight 參數
+            const iconSvg = getSimpleIconSvg(code, 0, `h${i}`, isNight); 
             const statusText = getWeatherStatusText(code);
 
             const item = document.createElement('div');
             item.className = 'wd-hour-item';
             
-            // [修改] HTML 順序：時間 -> Icon -> 狀態 -> 氣溫
             item.innerHTML = `
-                <div class="wd-hour-time">${timeStr}</div>
+                <div class="wd-hour-time" style="${i === startIdx ? 'font-weight:bold; color:#2563EB;' : ''}">${timeStr}</div>
                 <div class="wd-hour-icon">${iconSvg}</div>
                 <div class="wd-hour-desc">${statusText}</div>
                 <div class="wd-hour-temp">${temp}°</div>
@@ -7358,7 +7364,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
             hourlyContainer.appendChild(item);
         }
 
-        // --- 3. 渲染未來 7 天預報 (維持不變) ---
+        // --- 3. 渲染未來 7 天預報 (列表) ---
         const dailyContainer = document.getElementById('wd-daily-list');
         dailyContainer.innerHTML = '';
         
@@ -7369,8 +7375,9 @@ async function fetchAndShowDetail(lat, lon, locName) {
             const code = data.daily.weathercode[i];
             const popMax = data.daily.precipitation_probability_max[i];
             
-            // 這裡保留水位特效
-            const iconSvg = getSimpleIconSvg(code, popMax, `d${i}`);
+            // 日預報通常顯示白天的圖示 (isNight = false)
+            // 這裡保留 popMax 以顯示藍色水位
+            const iconSvg = getSimpleIconSvg(code, popMax, `d${i}`, false);
 
             const dateObj = new Date(data.daily.time[i]);
             const dayNames = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
@@ -7400,30 +7407,15 @@ async function fetchAndShowDetail(lat, lon, locName) {
     }
 }
 
-// [新增] 簡易天氣狀態文字轉換
-function getWeatherStatusText(code) {
-    if (code === 0) return '晴朗';
-    if (code >= 1 && code <= 3) return '多雲';
-    if (code >= 45 && code <= 48) return '有霧';
-    if (code >= 51 && code <= 67) return '有雨';
-    if (code >= 71 && code <= 77) return '降雪';
-    if (code >= 80 && code <= 82) return '陣雨';
-    if (code >= 85 && code <= 86) return '暴雪';
-    if (code >= 95) return '雷雨';
-    return '多雲';
-}
-
-// [修改] 產生漸層水位圖示的核心函式
-// code: 天氣代碼, pop: 降雨機率(0-100), uid: 漸層唯一ID
-function getSimpleIconSvg(code, pop, uid) {
-    // 顏色定義
-    const originalColor = "#374151"; // 上半部 (深灰)
-    const waterColor = "#60A5FA";    // 下半部 (淺藍，代表水)
-    
+// [重寫] 取得標準天氣 SVG 圖示
+// pop: 降雨機率 (決定水位，若為0則純線條)
+// isNight: 是否為晚上 (決定顯示太陽還是月亮)
+function getSimpleIconSvg(code, pop, uid, isNight = false) {
+    const originalColor = "#374151"; 
+    const waterColor = "#60A5FA";    
     const percentage = pop || 0;
     
-    // SVG 漸層定義 (由下往上填滿)
-    // offset 兩次設定相同數值，創造出「硬邊」的水位效果，而非漸層暈開
+    // 漸層定義 (若 percentage > 0 才有作用)
     const defs = `
     <defs>
         <linearGradient id="grad-${uid}" x1="0%" y1="100%" x2="0%" y2="0%">
@@ -7432,20 +7424,73 @@ function getSimpleIconSvg(code, pop, uid) {
         </linearGradient>
     </defs>`;
 
-    // 將漸層套用到 stroke (線條顏色)
+    // 設定 stroke
     const strokeAttr = `stroke="url(#grad-${uid})"`;
+    // 若機率為 0，則不需要 fill，若有特殊需求可調整。這裡我們統一用 stroke 繪製。
+    // 注意：月亮若要填滿效果，邏輯會不同，但為了統一風格，我們這裡全部採用「線條風格 (Outline)」。
+    
     const commonAttr = `viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ${strokeAttr}`;
 
     let path = '';
-    
-    // 依據代碼回傳路徑
-    if (code === 0) { // 晴天
-        path = `<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`;
-    } else if (code >= 51 && code <= 67 || code >= 80) { // 雨天
-        path = `<line x1="16" y1="13" x2="16" y2="21"></line><line x1="8" y1="13" x2="8" y2="21"></line><line x1="12" y1="15" x2="12" y2="23"></line><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>`;
-    } else if (code >= 71 && code <= 77) { // 雪 (已修正路徑防止變形)
-        path = `<path d="M8 15h8"/><path d="M8 9h8"/><path d="M12 3v18"/><path d="M12 12l4 4"/><path d="M12 12l-4 4"/><path d="M12 12l4-4"/><path d="M12 12l-4-4"/>`;
-    } else { // 多雲 (預設)
+
+    // 判斷邏輯
+    if (code === 0 || code === 1) { 
+        // === 晴朗 / 晴時多雲 ===
+        if (isNight) {
+            // [月亮] 標準新月
+            path = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
+        } else {
+            // [太陽] 圓形 + 8道光芒 (標準太陽)
+            path = `
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            `;
+        }
+    } else if (code === 2 || code === 3) {
+        // === 多雲 ===
+        // 雲朵形狀
+        path = `<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>`;
+    } else if (code >= 45 && code <= 48) {
+        // === 霧 ===
+        // 三條橫線代表霧氣
+        path = `
+            <line x1="4" y1="14" x2="20" y2="14"></line>
+            <line x1="4" y1="18" x2="20" y2="18"></line>
+            <line x1="4" y1="10" x2="20" y2="10"></line>
+        `;
+    } else if (code >= 51 && code <= 67 || code >= 80) {
+        // === 雨 ===
+        // 雲 + 下雨線條
+        path = `
+            <line x1="16" y1="13" x2="16" y2="21"></line>
+            <line x1="8" y1="13" x2="8" y2="21"></line>
+            <line x1="12" y1="15" x2="12" y2="23"></line>
+            <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>
+        `;
+    } else if (code >= 71 && code <= 77 || code >= 85) {
+        // === 雪 ===
+        // 標準雪花 (米字型)
+        path = `
+            <line x1="12" y1="2" x2="12" y2="22"></line>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+            <line x1="4.93" y1="19.07" x2="19.07" y2="4.93"></line>
+        `;
+    } else if (code >= 95) {
+        // === 雷雨 ===
+        // 雲 + 閃電
+        path = `
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        `;
+    } else {
+        // 預設多雲
         path = `<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>`;
     }
 
