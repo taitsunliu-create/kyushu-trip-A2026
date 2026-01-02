@@ -3786,10 +3786,10 @@ header.is-night {
     <div id="calc-modal" class="modal-overlay">
         <div class="modal-box" style="max-width: 340px; padding: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom:10px; border-bottom:1px solid #eee;">
-                <button id="btn-swap-cur" onclick="toggleCurrency()" style="background:#EFF6FF; border:1px solid #BFDBFE; color:#2563EB; border-radius:20px; padding:5px 12px; font-size:0.85rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:5px;">
-                    <span id="cur-label-main">JPY</span> 
-                    <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8M17 8v12M17 20l4-4M17 20l-4-4"/></svg>
-                    <span id="cur-label-sub">TWD</span>
+                <button id="btn-swap-cur" onclick="toggleCurrency()" style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:20px; padding:5px 12px; font-size:0.85rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                    <span id="cur-label-main" style="color:#2563EB">JPY</span> 
+                    <svg style="width:16px;height:16px; color:#6B7280;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 17H4M4 17L8 13M4 17L8 21M4 7H20M20 7L16 3M20 7L16 11"/></svg>
+                    <span id="cur-label-sub" style="color:#059669">TWD</span>
                 </button>
 
                 <div style="display: flex; align-items: center; gap: 5px; font-size: 0.85rem; color: #666;">
@@ -4877,7 +4877,8 @@ function getSmartAdviceText(temp, weatherCode) {
                 if(mainLabel && subLabel) {
                     mainLabel.innerText = "JPY";
                     subLabel.innerText = "TWD";
-                    mainLabel.style.color = "#2563EB";
+                    mainLabel.style.color = "#2563EB"; // JPY 藍色
+                    subLabel.style.color = "#059669"; // [新增] TWD 綠色
                 }
             }
 
@@ -4949,18 +4950,22 @@ function getSmartAdviceText(temp, weatherCode) {
         function toggleCurrency() {
             isJpyToTwd = !isJpyToTwd; // 切換狀態
             
-            // 更新按鈕文字
+            // 更新按鈕文字與顏色
             const mainLabel = document.getElementById('cur-label-main');
             const subLabel = document.getElementById('cur-label-sub');
             
             if (isJpyToTwd) {
+                // 模式：日 -> 台
                 mainLabel.innerText = "JPY";
+                mainLabel.style.color = "#2563EB"; // 主顯示 JPY (藍)
                 subLabel.innerText = "TWD";
-                mainLabel.style.color = "#2563EB"; // 藍色
+                subLabel.style.color = "#059669";  // 副顯示 TWD (綠)
             } else {
+                // 模式：台 -> 日
                 mainLabel.innerText = "TWD";
+                mainLabel.style.color = "#059669"; // 主顯示 TWD (綠)
                 subLabel.innerText = "JPY";
-                mainLabel.style.color = "#059669"; // 綠色
+                subLabel.style.color = "#2563EB";  // 副顯示 JPY (藍)
             }
 
             // 更新畫面上的符號並重新計算
