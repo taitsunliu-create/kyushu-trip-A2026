@@ -1522,19 +1522,40 @@
 .weather-detail-scroll::-webkit-scrollbar {
     display: none; 
 }
+/* [修改] 小時預報排版：時間 -> Icon -> 狀態 -> 氣溫 */
 .wd-hour-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 50px;
+    min-width: 60px; /* 稍微加寬以容納文字 */
     font-size: 0.85rem;
     color: #4B5563;
+    gap: 4px; /* 元素間距 */
+    padding: 5px 0;
 }
-.wd-hour-time { font-size: 0.8rem; margin-bottom: 5px; opacity: 0.8; }
-.wd-hour-icon svg { width: 24px; height: 24px; margin-bottom: 2px; }
-.wd-hour-temp { font-weight: 700; color: #1F2937; }
-.wd-hour-pop { font-size: 0.7rem; color: #3B82F6; font-weight: 600; } /* 降雨機率 */
-
+.wd-hour-time { 
+    font-size: 0.85rem; 
+    opacity: 0.9; 
+    font-weight: 500;
+}
+.wd-hour-icon svg { 
+    width: 28px; /* Icon稍微放大 */
+    height: 28px; 
+}
+/* [新增] 天氣狀態文字 (如: 降雪, 多雲) */
+.wd-hour-desc {
+    font-size: 0.75rem;
+    color: #6B7280;
+    font-weight: 500;
+    white-space: nowrap; /* 不換行 */
+}
+.wd-hour-temp { 
+    font-weight: 700; 
+    color: #1F2937; 
+    font-size: 1.1rem; /* 氣溫放大 */
+}
+/* 隱藏原本的降雨機率 */
+.wd-hour-pop { display: none; }
 /* --- [修改] 未來預報列表優化 (垂直日期 + 固定圖示寬度) --- */
 .wd-daily-row {
     display: flex;
@@ -7275,6 +7296,7 @@ async function openDetailedWeatherModal() {
 }
 
 // [修改] 抓取詳細天氣資料 (加入漸層圖示邏輯)
+// [修改] 抓取詳細天氣資料 (小時預報改版：時間/Icon/狀態/氣溫)
 async function fetchAndShowDetail(lat, lon, locName) {
     // 顯示 Loading
     document.getElementById('weather-detail-modal').style.display = 'flex';
@@ -7295,7 +7317,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
         document.getElementById('wd-sunrise').innerText = sunrise;
         document.getElementById('wd-sunset').innerText = sunset;
 
-        // --- 2. 渲染 24小時預報 (橫向捲動區) ---
+        // --- 2. 渲染 24小時預報 (新排版) ---
         const hourlyContainer = document.getElementById('wd-hourly-list');
         hourlyContainer.innerHTML = '';
         const currentHour = new Date().getHours();
@@ -7310,41 +7332,46 @@ async function fetchAndShowDetail(lat, lon, locName) {
         for (let i = startIdx; i < startIdx + 24; i++) {
             if (!data.hourly.time[i]) break;
             
-            const timeStr = data.hourly.time[i].split('T')[1];
+            // [修改] 時間格式：取 HH:00 -> 改為 HH時
+            let hourRaw = data.hourly.time[i].split('T')[1].split(':')[0]; 
+            const timeStr = `${hourRaw}時`; 
+
             const temp = Math.round(data.hourly.temperature_2m[i]);
             const code = data.hourly.weathercode[i];
-            const pop = data.hourly.precipitation_probability[i];
             
-            // 小時預報也套用漸層 (傳入 unique ID: 'h'+i)
-            const iconSvg = getSimpleIconSvg(code, pop, `h${i}`); 
+            // [修改] 傳入 0 作為機率，讓 SVG 不顯示藍色水位
+            const iconSvg = getSimpleIconSvg(code, 0, `h${i}`); 
+            
+            // [新增] 取得天氣狀態文字
+            const statusText = getWeatherStatusText(code);
 
             const item = document.createElement('div');
             item.className = 'wd-hour-item';
+            
+            // [修改] HTML 順序：時間 -> Icon -> 狀態 -> 氣溫
             item.innerHTML = `
                 <div class="wd-hour-time">${timeStr}</div>
                 <div class="wd-hour-icon">${iconSvg}</div>
-                <div class="wd-hour-pop">${pop > 0 ? pop + '%' : ''}</div>
+                <div class="wd-hour-desc">${statusText}</div>
                 <div class="wd-hour-temp">${temp}°</div>
             `;
             hourlyContainer.appendChild(item);
         }
 
-        // --- 3. 渲染未來 7 天預報 (列表區) ---
+        // --- 3. 渲染未來 7 天預報 (維持不變) ---
         const dailyContainer = document.getElementById('wd-daily-list');
         dailyContainer.innerHTML = '';
         
         for (let i = 0; i < 7; i++) {
-            // 日期格式化：改為斜線
-            const dateStr = data.daily.time[i].slice(5).replace('-', '/'); 
+            const dateStr = data.daily.time[i].slice(5).replace('-', '/');
             const max = Math.round(data.daily.temperature_2m_max[i]);
             const min = Math.round(data.daily.temperature_2m_min[i]);
             const code = data.daily.weathercode[i];
             const popMax = data.daily.precipitation_probability_max[i];
             
-            // [關鍵] 生成帶有水位漸層的 SVG (傳入 d+i 作為唯一ID)
+            // 這裡保留水位特效
             const iconSvg = getSimpleIconSvg(code, popMax, `d${i}`);
 
-            // 計算星期幾
             const dateObj = new Date(data.daily.time[i]);
             const dayNames = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
             const dayName = dayNames[dateObj.getDay()];
@@ -7356,11 +7383,8 @@ async function fetchAndShowDetail(lat, lon, locName) {
                     <div>${i===0 ? '今天' : dayName}</div>
                     <span>${dateStr}</span>
                 </div>
-                
                 <div class="wd-day-icon">${iconSvg}</div>
-                
                 <div class="wd-day-pop">${popMax > 0 ? popMax + '%' : ''}</div>
-                
                 <div class="wd-day-temp">
                     <span class="wd-temp-low">${min}°</span>
                     <span class="wd-temp-high">${max}°</span>
@@ -7374,6 +7398,19 @@ async function fetchAndShowDetail(lat, lon, locName) {
         document.getElementById('wd-hourly-list').innerHTML = '無法取得詳細資料';
         alert('獲取天氣詳情失敗，請檢查網路。');
     }
+}
+
+// [新增] 簡易天氣狀態文字轉換
+function getWeatherStatusText(code) {
+    if (code === 0) return '晴朗';
+    if (code >= 1 && code <= 3) return '多雲';
+    if (code >= 45 && code <= 48) return '有霧';
+    if (code >= 51 && code <= 67) return '有雨';
+    if (code >= 71 && code <= 77) return '降雪';
+    if (code >= 80 && code <= 82) return '陣雨';
+    if (code >= 85 && code <= 86) return '暴雪';
+    if (code >= 95) return '雷雨';
+    return '多雲';
 }
 
 // [修改] 產生漸層水位圖示的核心函式
