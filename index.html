@@ -7498,9 +7498,18 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
         `;
     } else if (code >= 95) {
         // === 雷雨 ===
+        
+        // 1. 原本的大閃電 (中間)
         path = `
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
         `;
+
+        // 2. [新增] 右上角的小閃電 (增加辨識度)
+        // 我重新計算了一個座標，放在右上角 (大約在 x=16~22 的位置)
+        path += `
+            <polygon points="19 2 16 7 18 7 17 11 22 5 20 5 19 2"></polygon>
+        `;
+
     } else {
         path = `<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>`;
     }
