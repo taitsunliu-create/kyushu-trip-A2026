@@ -7401,7 +7401,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
     }
 }
 
-// [重寫] 取得標準天氣 SVG 圖示
+// [修改] 取得標準天氣 SVG 圖示
 // pop: 降雨機率 (決定水位，若為0則純線條)
 // isNight: 是否為晚上 (決定顯示太陽還是月亮)
 function getSimpleIconSvg(code, pop, uid, isNight = false) {
@@ -7409,25 +7409,28 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
     const waterColor = "#60A5FA";    
     const percentage = pop || 0;
     
-    // 漸層定義 (若 percentage > 0 才有作用)
-    const defs = `
-    <defs>
-        <linearGradient id="grad-${uid}" x1="0%" y1="100%" x2="0%" y2="0%">
-            <stop offset="${percentage}%" stop-color="${waterColor}" />
-            <stop offset="${percentage}%" stop-color="${originalColor}" />
-        </linearGradient>
-    </defs>`;
+    // [優化邏輯] 
+    // 預設為純色 (針對 24小時預報或降雨機率 0% 的情況)
+    let defs = '';
+    let strokeAttr = `stroke="${originalColor}"`;
 
-    // 設定 stroke
-    const strokeAttr = `stroke="url(#grad-${uid})"`;
-    // 若機率為 0，則不需要 fill，若有特殊需求可調整。這裡我們統一用 stroke 繪製。
-    // 注意：月亮若要填滿效果，邏輯會不同，但為了統一風格，我們這裡全部採用「線條風格 (Outline)」。
+    // 只有當機率大於 0 時，才啟用漸層水位計
+    if (percentage > 0) {
+        defs = `
+        <defs>
+            <linearGradient id="grad-${uid}" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="${percentage}%" stop-color="${waterColor}" />
+                <stop offset="${percentage}%" stop-color="${originalColor}" />
+            </linearGradient>
+        </defs>`;
+        strokeAttr = `stroke="url(#grad-${uid})"`;
+    }
     
     const commonAttr = `viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ${strokeAttr}`;
 
     let path = '';
 
-    // 判斷邏輯
+    // 判斷邏輯 (維持不變)
     if (code === 0 || code === 1) { 
         // === 晴朗 / 晴時多雲 ===
         if (isNight) {
@@ -7449,11 +7452,9 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
         }
     } else if (code === 2 || code === 3) {
         // === 多雲 ===
-        // 雲朵形狀
         path = `<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>`;
     } else if (code >= 45 && code <= 48) {
         // === 霧 ===
-        // 三條橫線代表霧氣
         path = `
             <line x1="4" y1="14" x2="20" y2="14"></line>
             <line x1="4" y1="18" x2="20" y2="18"></line>
@@ -7461,7 +7462,6 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
         `;
     } else if (code >= 51 && code <= 67 || code >= 80) {
         // === 雨 ===
-        // 雲 + 下雨線條
         path = `
             <line x1="16" y1="13" x2="16" y2="21"></line>
             <line x1="8" y1="13" x2="8" y2="21"></line>
@@ -7470,7 +7470,6 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
         `;
     } else if (code >= 71 && code <= 77 || code >= 85) {
         // === 雪 ===
-        // 標準雪花 (米字型)
         path = `
             <line x1="12" y1="2" x2="12" y2="22"></line>
             <line x1="2" y1="12" x2="22" y2="12"></line>
@@ -7479,12 +7478,11 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
         `;
     } else if (code >= 95) {
         // === 雷雨 ===
-        // 雲 + 閃電
         path = `
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
         `;
     } else {
-        // 預設多雲
+        // 預設
         path = `<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>`;
     }
 
