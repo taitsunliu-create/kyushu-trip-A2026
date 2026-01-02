@@ -7404,7 +7404,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
 // [修改] 取得標準天氣 SVG 圖示
 // pop: 降雨機率 (決定水位，若為0則純線條)
 // isNight: 是否為晚上 (決定顯示太陽還是月亮)
-// [修改] 取得標準天氣 SVG 圖示 (包含太陽光芒動態切換邏輯)
+// [修改] 最終完整版：整合太陽光芒切換、藍色雨滴、雷雨雙閃電
 function getSimpleIconSvg(code, pop, uid, isNight = false) {
     const originalColor = "#374151"; 
     const waterColor = "#60A5FA";    
@@ -7414,7 +7414,6 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
     let defs = '';
     let strokeAttr = `stroke="${originalColor}"`; // 預設純色
 
-    // 只有當機率 > 0 時，才定義並使用漸層
     if (percentage > 0) {
         defs = `
         <defs>
@@ -7439,12 +7438,8 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
         } else {
             // [太陽] 依據降雨機率切換造型
             if (percentage > 0) {
-                // === 情況 A: 有降雨機率 (光芒變 6 根，水位只在中間圓) ===
-                
-                // 1. 太陽本體 (圓形)：繼承 strokeAttr (會有漸層藍色水位)
+                // (有雨) 光芒變 6 根，水位只在中間圓
                 path = `<circle cx="12" cy="12" r="5"></circle>`;
-                
-                // 2. 太陽光芒 (6根)：強制指定 stroke 為 originalColor (永遠灰色，不變藍)
                 const rayStyle = `stroke="${originalColor}"`; 
                 path += `
                     <line x1="12" y1="1" x2="12" y2="4" ${rayStyle}></line>
@@ -7455,8 +7450,7 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
                     <line x1="12" y1="1" x2="12" y2="4" transform="rotate(300 12 12)" ${rayStyle}></line>
                 `;
             } else {
-                // === 情況 B: 0% 降雨機率 (回復原本 8 根光芒，無水位) ===
-                // 因為 percentage 是 0，strokeAttr 已經是 originalColor，所以不用額外設定
+                // (無雨) 8 根光芒，無水位
                 path = `
                     <circle cx="12" cy="12" r="5"></circle>
                     <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -7481,7 +7475,7 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
             <line x1="4" y1="10" x2="20" y2="10"></line>
         `;
     } else if (code >= 51 && code <= 67 || code >= 80) {
-        // === 雨 (維持藍色雨滴優化) ===
+        // === 雨 (強制藍色雨滴) ===
         path = `
             <line x1="16" y1="13" x2="16" y2="21" stroke="${waterColor}"></line>
             <line x1="8" y1="13" x2="8" y2="21" stroke="${waterColor}"></line>
@@ -7497,19 +7491,11 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
             <line x1="4.93" y1="19.07" x2="19.07" y2="4.93"></line>
         `;
     } else if (code >= 95) {
-        // === 雷雨 ===
-        
-        // 1. 原本的大閃電 (中間)
-        path = `
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-        `;
-
-        // 2. [新增] 右上角的小閃電 (增加辨識度)
-        // 我重新計算了一個座標，放在右上角 (大約在 x=16~22 的位置)
-        path += `
-            <polygon points="19 2 16 7 18 7 17 11 22 5 20 5 19 2"></polygon>
-        `;
-
+        // === 雷雨 (這裡加入了雙閃電) ===
+        // 大閃電
+        path = `<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>`;
+        // [修正] 小閃電 (之前被覆蓋掉的部分)
+        path += `<polygon points="19 2 16 7 18 7 17 11 22 5 20 5 19 2"></polygon>`;
     } else {
         path = `<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>`;
     }
