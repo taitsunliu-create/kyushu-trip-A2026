@@ -7404,17 +7404,16 @@ async function fetchAndShowDetail(lat, lon, locName) {
 // [修改] 取得標準天氣 SVG 圖示
 // pop: 降雨機率 (決定水位，若為0則純線條)
 // isNight: 是否為晚上 (決定顯示太陽還是月亮)
+// [修改] 優化版：讓雨滴線條更明顯
 function getSimpleIconSvg(code, pop, uid, isNight = false) {
     const originalColor = "#374151"; 
     const waterColor = "#60A5FA";    
     const percentage = pop || 0;
     
-    // [優化邏輯] 
-    // 預設為純色 (針對 24小時預報或降雨機率 0% 的情況)
+    // 1. 定義漸層 (給雲朵本體用)
     let defs = '';
-    let strokeAttr = `stroke="${originalColor}"`;
+    let strokeAttr = `stroke="${originalColor}"`; // 預設灰色
 
-    // 只有當機率大於 0 時，才啟用漸層水位計
     if (percentage > 0) {
         defs = `
         <defs>
@@ -7430,14 +7429,12 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
 
     let path = '';
 
-    // 判斷邏輯 (維持不變)
+    // 2. 圖示邏輯
     if (code === 0 || code === 1) { 
-        // === 晴朗 / 晴時多雲 ===
+        // === 晴朗 ===
         if (isNight) {
-            // [月亮] 標準新月
             path = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
         } else {
-            // [太陽] 圓形 + 8道光芒 (標準太陽)
             path = `
                 <circle cx="12" cy="12" r="5"></circle>
                 <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -7462,10 +7459,11 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
         `;
     } else if (code >= 51 && code <= 67 || code >= 80) {
         // === 雨 ===
+        // [重點修改] 強制雨滴線條使用藍色 (waterColor)，不使用漸層，讓它看起來更像真的雨
         path = `
-            <line x1="16" y1="13" x2="16" y2="21"></line>
-            <line x1="8" y1="13" x2="8" y2="21"></line>
-            <line x1="12" y1="15" x2="12" y2="23"></line>
+            <line x1="16" y1="13" x2="16" y2="21" stroke="${waterColor}"></line>
+            <line x1="8" y1="13" x2="8" y2="21" stroke="${waterColor}"></line>
+            <line x1="12" y1="15" x2="12" y2="23" stroke="${waterColor}"></line>
             <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>
         `;
     } else if (code >= 71 && code <= 77 || code >= 85) {
@@ -7482,7 +7480,6 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
         `;
     } else {
-        // 預設
         path = `<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>`;
     }
 
