@@ -4894,8 +4894,8 @@ function getSmartAdviceText(temp, weatherCode) {
                     }));
                     updateRateUI(newRate, '即時');
                     
-                    // 如果原本有輸入數字，自動重算
-                    if(document.getElementById('inp-jpy').value) calculateExchange('jpy');
+                   // 如果原本有輸入數字，自動重算 (使用新的計算邏輯)
+                    reCalcTotal();
                 }
             } catch (e) {
                 console.error("匯率更新失敗", e);
