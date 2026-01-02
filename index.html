@@ -3783,7 +3783,9 @@ header.is-night {
             </div>
         </div>
     </div>
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom:10px; border-bottom:1px solid #eee;">
+    <div id="calc-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 340px; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom:10px; border-bottom:1px solid #eee;">
                 <button id="btn-swap-cur" onclick="toggleCurrency()" style="background:#EFF6FF; border:1px solid #BFDBFE; color:#2563EB; border-radius:20px; padding:5px 12px; font-size:0.85rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:5px;">
                     <span id="cur-label-main">JPY</span> 
                     <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8M17 8v12M17 20l4-4M17 20l-4-4"/></svg>
@@ -3797,7 +3799,10 @@ header.is-night {
             </div>
 
             <div class="calc-display">
-                <div class="calc-expr" id="calc-expr-display"></div> <div class="calc-main" id="calc-main-display">¥0</div> <div class="calc-sub" id="calc-sub-display">≈ NT$0</div> </div>
+                <div class="calc-expr" id="calc-expr-display"></div> 
+                <div class="calc-main" id="calc-main-display">¥0</div> 
+                <div class="calc-sub" id="calc-sub-display">≈ NT$0</div> 
+            </div>
 
             <div class="calc-keypad">
                 <button class="calc-btn ac" onclick="calcInput('AC')">AC</button>
@@ -3818,7 +3823,9 @@ header.is-night {
                 <button class="calc-btn" onclick="calcInput('1')">1</button>
                 <button class="calc-btn" onclick="calcInput('2')">2</button>
                 <button class="calc-btn" onclick="calcInput('3')">3</button>
-                <button class="calc-btn eq" onclick="calcInput('=')">=</button> <button class="calc-btn" onclick="calcInput('0')" style="grid-column: span 2;">0</button>
+                <button class="calc-btn eq" onclick="calcInput('=')">=</button> 
+                
+                <button class="calc-btn" onclick="calcInput('0')" style="grid-column: span 2;">0</button>
                 <button class="calc-btn" onclick="calcInput('.')">.</button>
                 <button class="calc-btn" style="background:#F9FAFB; border:none; box-shadow:none; cursor:default;" onclick="closeCalcModal()">關閉</button>
             </div>
