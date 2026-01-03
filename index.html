@@ -1740,6 +1740,78 @@
             margin-bottom: 20px;
             border: none; /* 移除邊框 */
         }
+        /* [新增] 即時天氣儀表板樣式 */
+        .cw-container {
+            margin-bottom: 20px;
+            text-align: left;
+            padding: 0 5px;
+        }
+
+        /* 上半部：大溫度與狀態 */
+        .cw-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .cw-temp-big {
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #1F2937;
+            letter-spacing: -2px;
+        }
+        .cw-info-col {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .cw-condition {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1F2937;
+            margin-bottom: 4px;
+        }
+        .cw-hl-temp {
+            font-size: 0.9rem;
+            color: #6B7280;
+            font-family: monospace;
+        }
+
+        /* 下半部：四格資訊卡 (仿 iOS 風格) */
+        .cw-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .cw-card {
+            background: rgba(0, 0, 0, 0.03); /* 極淡背景 */
+            border-radius: 12px;
+            padding: 10px 5px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70px;
+        }
+        .cw-icon {
+            width: 18px;
+            height: 18px;
+            color: #6B7280;
+            margin-bottom: 4px;
+        }
+        .cw-label {
+            font-size: 0.75rem;
+            color: #9CA3AF;
+            margin-bottom: 2px;
+        }
+        .cw-value {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #374151;
+        }
 /* [修改] 日出日落區塊佈局 */
 .astro-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 
@@ -4163,20 +4235,35 @@ header.is-night {
 <div id="weather-detail-modal" class="modal-overlay">
     <div class="modal-box" style="max-width: 400px; padding: 20px; max-height: 85vh; overflow-y: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <div class="modal-title" id="wd-title" style="margin:0; font-size:1.3rem;">--</div>
-            
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <button onclick="openDetailedWeatherModal()" style="background:none; border:none; cursor: pointer; color:#999; display:flex; align-items:center; padding:0;" title="重新整理">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M23 4v6h-6"></path>
-                        <path d="M1 20v-6h6"></path>
-                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                    </svg>
-                </button>
-                <button onclick="document.getElementById('weather-detail-modal').style.display='none'" style="background:none; border:none; font-size:1.8rem; color:#999; cursor: pointer; line-height: 1; padding:0;">×</button>
+           <div class="modal-title" id="wd-title">--</div>
+
+        <div class="cw-container">
+            <div class="cw-header">
+                <div class="cw-temp-big" id="wd-cur-temp">--°</div>
+                <div class="cw-info-col">
+                    <div class="cw-condition" id="wd-cur-desc">--</div>
+                    <div class="cw-hl-temp" id="wd-cur-hl">高:-- 低:--</div>
+                </div>
+            </div>
+            <div class="cw-grid">
+                <div class="cw-card">
+                    <div class="cw-label">體感</div>
+                    <div class="cw-value" id="wd-feel">--°</div>
+                </div>
+                <div class="cw-card">
+                    <div class="cw-label">降雨率</div>
+                    <div class="cw-value" id="wd-pop">--%</div>
+                </div>
+                <div class="cw-card">
+                    <div class="cw-label">紫外線</div>
+                    <div class="cw-value" id="wd-uv">--</div>
+                </div>
+                <div class="cw-card">
+                    <div class="cw-label">風速</div>
+                    <div class="cw-value" id="wd-wind">--</div>
+                </div>
             </div>
         </div>
-        
         <div class="astro-box">
             <div class="astro-item">
                 <div class="astro-icon">
