@@ -341,29 +341,37 @@
             justify-content: flex-start;
         }
 
-        /* [新增] 右上角關閉 X 按鈕 */
+        /* [修改] 右上角關閉 X 按鈕樣式 - 無底色並調整位置 */
         .btn-modal-close-x {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            width: 30px;
-            height: 30px;
-            background: #F3F4F6;
-            color: #6B7280;
+            top: 5px;            /* [修改] 數值越小越往上 */
+            right: 5px;          /* [修改] 數值越小越往右 */
+            width: 32px;
+            height: 32px;
+            background: transparent; /* [修改] 變為透明背景 */
+            color: #9CA3AF;       /* [微調] 稍微調淡一點的灰色，比較不搶眼 */
             border: none;
-            border-radius: 50%;
-            font-size: 1.2rem;
+            font-size: 1.8rem;    /* [微調] 加大字體，讓無底色的 X 更清晰 */
             line-height: 1;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            z-index: 10;
+        }
+        
+        /* [修改] 滑鼠移入和按下時給予輕微的回饋 */
+        .btn-modal-close-x:hover {
+            color: #4B5563; /* 滑入時變深灰色 */
         }
         .btn-modal-close-x:active {
-            background: #E5E7EB;
+            background: rgba(0, 0, 0, 0.05); /* 按下時出現淡淡的圓形背景 */
+            border-radius: 50%;
             transform: scale(0.9);
-        }/* [新增] 筆記區升級 - 支援圖文混排與放大 */
+            color: #1F2937;
+        }
+        /* [新增] 筆記區升級 - 支援圖文混排與放大 */
         .note-editable-box {
             width: 100%;
             height: 250px;
