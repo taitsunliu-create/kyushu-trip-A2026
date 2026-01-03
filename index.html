@@ -4235,8 +4235,20 @@ header.is-night {
 <div id="weather-detail-modal" class="modal-overlay">
     <div class="modal-box" style="max-width: 400px; padding: 20px; max-height: 85vh; overflow-y: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <div class="modal-title" id="wd-title" style="margin:0; font-size:1.3rem;">--</div>
-            </div>
+           <div class="modal-title" id="wd-title" style="margin:0; font-size:1.3rem;">--</div>
+           
+           <div style="display: flex; align-items: center; gap: 8px;">
+               <button id="wd-btn-refresh" style="background:none; border:none; cursor:pointer; padding:4px; display:flex; align-items:center; justify-content:center; color:#6B7280;">
+                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                       <path d="M23 4v6h-6"></path>
+                       <path d="M1 20v-6h6"></path>
+                       <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                   </svg>
+               </button>
+               
+               <button class="btn-modal-close-x" onclick="document.getElementById('weather-detail-modal').style.display='none'" style="position: static; margin:0;">×</button>
+           </div>
+        </div>
 
         <div class="cw-container">
             <div class="cw-header">
@@ -7525,7 +7537,18 @@ async function fetchAndShowDetail(lat, lon, locName) {
     // 顯示 Loading
     document.getElementById('weather-detail-modal').style.display = 'flex';
     document.getElementById('wd-title').innerText = locName;
-    
+    // [新增] 設定重整按鈕的功能 (點擊後重新執行此函式)
+    document.getElementById('wd-btn-refresh').onclick = function() {
+        // 加入簡單的旋轉動畫效果，讓使用者知道有在跑
+        const icon = this.querySelector('svg');
+        if(icon) { 
+            icon.style.transition = 'transform 0.5s'; 
+            icon.style.transform = 'rotate(360deg)';
+            setTimeout(() => { icon.style.transform = 'none'; }, 500);
+        }
+        // 重新抓取資料
+        fetchAndShowDetail(lat, lon, locName);
+    };
     // 初始化儀表板數值
     document.getElementById('wd-cur-temp').innerText = '--°';
     document.getElementById('wd-cur-desc').innerText = '載入中...';
