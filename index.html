@@ -1774,7 +1774,7 @@
             gap: 8px;
         }
         .cw-card {
-            background: rgba(0, 0, 0, 0.03); /* 極淡背景 */
+            background: rgba(0, 0, 0, 0.03); /* [還原] 背景改回極淡灰色，配合灰色文字 */
             border-radius: 12px;
             padding: 10px 5px;
             text-align: center;
@@ -1787,48 +1787,48 @@
         .cw-icon {
             width: 18px;
             height: 18px;
-            color: #6B7280;
+            color: #666; /* [修改] 圖示顏色改為 #666 (與日出標籤一致) */
             margin-bottom: 4px;
         }
         .cw-label {
             font-size: 0.75rem;
-            color: #9CA3AF;
+            color: #666; /* [關鍵修改] 標籤顏色改為 #666 (與「日出」文字顏色完全一致) */
             margin-bottom: 2px;
         }
         .cw-value {
             font-size: 0.95rem;
             font-weight: 700;
-            color: #374151;
+            color: #333; /* [修改] 數值顏色改為 #333 (與日出「時間」顏色一致) */
         }
-/* [修改] 日出日落區塊 - 去除突兀邊框，改為極簡風格 */
+        /* [修改] 日出日落區塊 - 去除突兀邊框，改為極簡風格 */
         .astro-box {
             display: flex;
             justify-content: space-around;
             align-items: center;
             /* 移除原本的漸層與橘色邊框，改用極淡的背景融入 */
             background: rgba(0, 0, 0, 0.03); 
-            padding: 15px 0;
+            padding: 8px 0; /* [維持縮小] 高度縮小：原本 15px -> 8px */
             border-radius: 16px;
             margin-bottom: 20px;
             border: none; /* 移除邊框 */
         }
-/* [修改] 日出日落區塊佈局 */
-.astro-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        /* [修改] 日出日落區塊佈局 */
+        .astro-item { display: flex; flex-direction: column; align-items: center; gap: 1px; }
 
-/* [新增] 日出日落 SVG 圖示樣式 */
-.astro-icon svg {
-    width: 32px; 
-    height: 32px;
-    stroke: #F59E0B; /* 太陽暖橘色 */
-    fill: none;
-    stroke-width: 1.5; /* 線條細緻一點，仿 iOS 風格 */
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    margin-bottom: 4px;
-    filter: drop-shadow(0 2px 3px rgba(245, 158, 11, 0.2)); /* 淡淡的光暈 */
-}
-.astro-label { font-size: 0.8rem; color: #666; }
-.astro-time { font-size: 1.1rem; font-weight: 700; color: #333; }
+        /* [新增] 日出日落 SVG 圖示樣式 */
+        .astro-icon svg {
+            width: 24px; /* [維持縮小] 圖示縮小：原本 32px -> 24px */
+            height: 24px;
+            stroke: #F59E0B; /* 太陽暖橘色 (僅圖示保留顏色) */
+            fill: none;
+            stroke-width: 1.5; /* 線條細緻一點，仿 iOS 風格 */
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            margin-bottom: 2px;
+            filter: drop-shadow(0 2px 3px rgba(245, 158, 11, 0.2)); /* 淡淡的光暈 */
+        }
+        .astro-label { font-size: 0.7rem; color: #666; } /* [維持縮小] 字體縮小，顏色維持 #666 */
+        .astro-time { font-size: 0.95rem; font-weight: 700; color: #333; } /* [維持縮小] 字體縮小 */
 /* --- [新增] iOS 天氣動態特效 (仿 iPhone 天氣) --- */
 /* 1. Header 容器設定 */
 .weather-bg-layer {
