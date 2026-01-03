@@ -4011,8 +4011,11 @@ header.is-night {
         </div>
     </div>
     <div id="calc-modal" class="modal-overlay">
-        <div class="modal-box" style="max-width: 340px; padding: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom:10px; border-bottom:1px solid #eee;">
+        <div class="modal-box" style="max-width: 340px; padding: 25px 20px 20px 20px; position: relative;">
+            
+            <button class="btn-modal-close-x" onclick="closeCalcModal()">×</button>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom:10px; border-bottom:1px solid #eee; margin-right: 30px;">
                 <button id="btn-swap-cur" onclick="toggleCurrency()" style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:20px; padding:5px 12px; font-size:0.85rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:5px;">
                     <span id="cur-label-main" style="color:#2563EB">JPY</span> 
                     <svg style="width:16px;height:16px; color:#6B7280;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 17H4M4 17L8 13M4 17L8 21M4 7H20M20 7L16 3M20 7L16 11"/></svg>
@@ -4050,12 +4053,13 @@ header.is-night {
                 <button class="calc-btn" onclick="calcInput('1')">1</button>
                 <button class="calc-btn" onclick="calcInput('2')">2</button>
                 <button class="calc-btn" onclick="calcInput('3')">3</button>
+                
                 <button class="calc-btn eq" onclick="calcInput('=')">=</button> 
                 
-                <button class="calc-btn" onclick="calcInput('0')" style="grid-column: span 2;">0</button>
+                <button class="calc-btn zero" onclick="calcInput('0')">0</button>
                 <button class="calc-btn" onclick="calcInput('.')">.</button>
-                <button class="calc-btn" style="background:#F9FAFB; border:none; box-shadow:none; cursor:default;" onclick="closeCalcModal()">關閉</button>
-            </div>
+                
+                </div>
         </div>
     </div>
     <div id="img-preview-modal" class="modal-overlay">
