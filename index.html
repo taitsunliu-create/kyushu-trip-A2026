@@ -1610,6 +1610,47 @@
     /* 👇 [新增] 讓滑鼠游標變更，提示可抓取 */
     cursor: grab;
 }
+/* --- [修改] Modal 頭部按鈕群組樣式 (對齊與防衝突) --- */
+.modal-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* 按鈕之間的間距 */
+}
+
+/* 統一定義重整與關閉按鈕的大小與外觀 */
+.btn-header-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%; /* 圓形 */
+    background-color: #F3F4F6; /* 淺灰底色，讓點擊範圍更明確 */
+    border: none;
+    color: #4B5563;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    /* 關鍵：取消原本 X 按鈕的絕對定位，改回標準流 */
+    position: static !important; 
+    margin: 0 !important;
+}
+
+.btn-header-icon:active {
+    background-color: #E5E7EB;
+    transform: scale(0.92);
+}
+
+.btn-header-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.5;
+}
+
+/* 確保 Modal 內部捲動時不觸發底層翻頁 (CSS 輔助) */
+#weather-detail-modal .modal-box {
+    overscroll-behavior: contain; /* 防止捲動鍊溢出 */
+}
 
 /* (同時建議在下方加入這行，隱藏醜醜的捲軸但保留功能) */
 .weather-detail-scroll::-webkit-scrollbar {
@@ -1728,35 +1769,107 @@
             text-align: right;
             color: #4B5563; /* 原本是 #1F2937 (太深)，現在改淡一點 */
         }
-/* [修改] 日出日落區塊 - 去除突兀邊框，改為極簡風格 */
+        /* [新增] 即時天氣儀表板樣式 */
+        .cw-container {
+            margin-bottom: 20px;
+            text-align: left;
+            padding: 0 5px;
+        }
+
+        /* 上半部：大溫度與狀態 */
+        .cw-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .cw-temp-big {
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #1F2937;
+            letter-spacing: -2px;
+        }
+        .cw-info-col {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .cw-condition {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1F2937;
+            margin-bottom: 4px;
+        }
+        .cw-hl-temp {
+            font-size: 0.9rem;
+            color: #6B7280;
+            font-family: monospace;
+        }
+
+        /* 下半部：四格資訊卡 (仿 iOS 風格) */
+        .cw-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .cw-card {
+            background: rgba(0, 0, 0, 0.03); /* [還原] 背景改回極淡灰色，配合灰色文字 */
+            border-radius: 12px;
+            padding: 10px 5px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70px;
+        }
+        .cw-icon {
+            width: 18px;
+            height: 18px;
+            color: #666; /* [修改] 圖示顏色改為 #666 (與日出標籤一致) */
+            margin-bottom: 4px;
+        }
+        .cw-label {
+            font-size: 0.75rem;
+            color: #666; /* [關鍵修改] 標籤顏色改為 #666 (與「日出」文字顏色完全一致) */
+            margin-bottom: 2px;
+        }
+        .cw-value {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #333; /* [修改] 數值顏色改為 #333 (與日出「時間」顏色一致) */
+        }
+        /* [修改] 日出日落區塊 - 去除突兀邊框，改為極簡風格 */
         .astro-box {
             display: flex;
             justify-content: space-around;
             align-items: center;
             /* 移除原本的漸層與橘色邊框，改用極淡的背景融入 */
             background: rgba(0, 0, 0, 0.03); 
-            padding: 15px 0;
+            padding: 8px 0; /* [維持縮小] 高度縮小：原本 15px -> 8px */
             border-radius: 16px;
             margin-bottom: 20px;
             border: none; /* 移除邊框 */
         }
-/* [修改] 日出日落區塊佈局 */
-.astro-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        /* [修改] 日出日落區塊佈局 */
+        .astro-item { display: flex; flex-direction: column; align-items: center; gap: 1px; }
 
-/* [新增] 日出日落 SVG 圖示樣式 */
-.astro-icon svg {
-    width: 32px; 
-    height: 32px;
-    stroke: #F59E0B; /* 太陽暖橘色 */
-    fill: none;
-    stroke-width: 1.5; /* 線條細緻一點，仿 iOS 風格 */
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    margin-bottom: 4px;
-    filter: drop-shadow(0 2px 3px rgba(245, 158, 11, 0.2)); /* 淡淡的光暈 */
-}
-.astro-label { font-size: 0.8rem; color: #666; }
-.astro-time { font-size: 1.1rem; font-weight: 700; color: #333; }
+        /* [新增] 日出日落 SVG 圖示樣式 */
+        .astro-icon svg {
+            width: 24px; /* [維持縮小] 圖示縮小：原本 32px -> 24px */
+            height: 24px;
+            stroke: #F59E0B; /* 太陽暖橘色 (僅圖示保留顏色) */
+            fill: none;
+            stroke-width: 1.5; /* 線條細緻一點，仿 iOS 風格 */
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            margin-bottom: 2px;
+            filter: drop-shadow(0 2px 3px rgba(245, 158, 11, 0.2)); /* 淡淡的光暈 */
+        }
+        .astro-label { font-size: 0.7rem; color: #666; } /* [維持縮小] 字體縮小，顏色維持 #666 */
+        .astro-time { font-size: 0.95rem; font-weight: 700; color: #333; } /* [維持縮小] 字體縮小 */
 /* --- [新增] iOS 天氣動態特效 (仿 iPhone 天氣) --- */
 /* 1. Header 容器設定 */
 .weather-bg-layer {
@@ -4163,20 +4276,48 @@ header.is-night {
 <div id="weather-detail-modal" class="modal-overlay">
     <div class="modal-box" style="max-width: 400px; padding: 20px; max-height: 85vh; overflow-y: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <div class="modal-title" id="wd-title" style="margin:0; font-size:1.3rem;">--</div>
-            
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <button onclick="openDetailedWeatherModal()" style="background:none; border:none; cursor: pointer; color:#999; display:flex; align-items:center; padding:0;" title="重新整理">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M23 4v6h-6"></path>
-                        <path d="M1 20v-6h6"></path>
-                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                    </svg>
-                </button>
-                <button onclick="document.getElementById('weather-detail-modal').style.display='none'" style="background:none; border:none; font-size:1.8rem; color:#999; cursor: pointer; line-height: 1; padding:0;">×</button>
+           <div class="modal-title" id="wd-title" style="margin:0; font-size:1.3rem;">--</div>
+           
+           <div style="display: flex; align-items: center; gap: 8px;">
+               <button id="wd-btn-refresh" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; color:#9CA3AF;">
+                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                       <path d="M23 4v6h-6"></path>
+                       <path d="M1 20v-6h6"></path>
+                       <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                   </svg>
+               </button>
+               
+               <button class="btn-modal-close-x" onclick="document.getElementById('weather-detail-modal').style.display='none'" style="position: static; margin:0;">×</button>
+           </div>
+        </div>
+
+        <div class="cw-container">
+            <div class="cw-header">
+                <div class="cw-temp-big" id="wd-cur-temp">--°</div>
+                <div class="cw-info-col">
+                    <div class="cw-condition" id="wd-cur-desc">--</div>
+                    <div class="cw-hl-temp" id="wd-cur-hl">高:-- 低:--</div>
+                </div>
+            </div>
+            <div class="cw-grid">
+                <div class="cw-card">
+                    <div class="cw-label">體感</div>
+                    <div class="cw-value" id="wd-feel">--°</div>
+                </div>
+                <div class="cw-card">
+                    <div class="cw-label">降雨率</div>
+                    <div class="cw-value" id="wd-pop">--%</div>
+                </div>
+                <div class="cw-card">
+                    <div class="cw-label">紫外線</div>
+                    <div class="cw-value" id="wd-uv">--</div>
+                </div>
+                <div class="cw-card">
+                    <div class="cw-label">風速</div>
+                    <div class="cw-value" id="wd-wind">--</div>
+                </div>
             </div>
         </div>
-        
         <div class="astro-box">
             <div class="astro-item">
                 <div class="astro-icon">
@@ -6612,14 +6753,14 @@ function compressImage(file, maxWidth, quality) {
 
 // [修正] 防止天氣橫向捲動區與全域換頁手勢衝突
 // [修正] 防止天氣橫向捲動區與全域換頁手勢衝突
+// [修正] 防止天氣視窗滑動時誤觸底層換頁
 function preventSwipeConflict() {
-    // 定義阻擋冒泡的函式
-    const stopPropagation = (e) => {
-        // 關鍵：告訴瀏覽器「事件到此為止」，不要往上傳給翻頁引擎
+    // 定義一個阻擋訊號往上傳的函式
+    const stopPropagation = (e) => { 
         e.stopPropagation(); 
     };
 
-    // 1. 橫向捲動區 (小時預報)
+    // 1. 針對「橫向」捲動的小時預報 (維持原有功能)
     const hourlyScroll = document.getElementById('wd-hourly-list');
     if (hourlyScroll) {
         hourlyScroll.addEventListener('touchstart', stopPropagation, { passive: true });
@@ -6628,7 +6769,8 @@ function preventSwipeConflict() {
         hourlyScroll.addEventListener('wheel', stopPropagation, { passive: true });
     }
 
-    // 2. [新增] 天氣預報視窗的垂直捲動容器 (避免滑到底層)
+    // 2. [新增] 針對「垂直」捲動的天氣視窗白色區塊 (.modal-box)
+    // 這行是解決「上下滑動誤控」的關鍵
     const weatherModalBox = document.querySelector('#weather-detail-modal .modal-box');
     if (weatherModalBox) {
         weatherModalBox.addEventListener('touchstart', stopPropagation, { passive: true });
@@ -7436,18 +7578,71 @@ async function fetchAndShowDetail(lat, lon, locName) {
     // 顯示 Loading
     document.getElementById('weather-detail-modal').style.display = 'flex';
     document.getElementById('wd-title').innerText = locName;
+    // [新增] 設定重整按鈕的功能 (點擊後重新執行此函式)
+    document.getElementById('wd-btn-refresh').onclick = function() {
+        // 加入簡單的旋轉動畫效果，讓使用者知道有在跑
+        const icon = this.querySelector('svg');
+        if(icon) { 
+            icon.style.transition = 'transform 0.5s'; 
+            icon.style.transform = 'rotate(360deg)';
+            setTimeout(() => { icon.style.transform = 'none'; }, 500);
+        }
+        // 重新抓取資料
+        fetchAndShowDetail(lat, lon, locName);
+    };
+    // 初始化儀表板數值
+    document.getElementById('wd-cur-temp').innerText = '--°';
+    document.getElementById('wd-cur-desc').innerText = '載入中...';
+    document.getElementById('wd-feel').innerText = '--';
+    document.getElementById('wd-pop').innerText = '--';
+    document.getElementById('wd-uv').innerText = '--';
+    document.getElementById('wd-wind').innerText = '--';
+
     document.getElementById('wd-hourly-list').innerHTML = '<div style="padding:10px;">資料載入中...</div>';
     document.getElementById('wd-daily-list').innerHTML = '';
     
     try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max&current_weather=true&timezone=auto`;
+        // [關鍵修改] URL 新增 hourly 參數: apparent_temperature (體感), uv_index (紫外線), wind_speed_10m (風速)
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,apparent_temperature,uv_index,wind_speed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max&current_weather=true&timezone=auto`;
         
         const res = await fetch(url);
         const data = await res.json();
         
-        // --- 1. 更新日出日落 ---
+        // --- 0. 處理時間索引 (找到目前這小時的資料) ---
+        const currentHour = new Date().getHours();
+        let startIdx = 0;
+        const dataDate = data.hourly.time[0].split('T')[0];
+        const todayDate = new Date().toISOString().split('T')[0];
+        
+        // 如果 API 回傳的第一天是今天，就從目前小時開始抓
+        if (dataDate === todayDate) {
+            startIdx = currentHour;
+        }
+
+        // --- 1. 更新上方儀表板 (Dashboard) ---
+        // 使用目前這小時的詳細數據
+        const curTemp = Math.round(data.current_weather.temperature);
+        const curCode = data.current_weather.weathercode;
+        const curFeel = Math.round(data.hourly.apparent_temperature[startIdx]);
+        const curPop = data.hourly.precipitation_probability[startIdx];
+        const curUv = data.hourly.uv_index[startIdx];
+        const curWind = Math.round(data.hourly.wind_speed_10m[startIdx]);
+        
+        const todayMax = Math.round(data.daily.temperature_2m_max[0]);
+        const todayMin = Math.round(data.daily.temperature_2m_min[0]);
+
+        document.getElementById('wd-cur-temp').innerText = `${curTemp}°`;
+        document.getElementById('wd-cur-desc').innerText = getWeatherDescText(curCode); // 使用既有的文字轉換函式
+        document.getElementById('wd-cur-hl').innerText = `高:${todayMax}° 低:${todayMin}°`;
+        
+        document.getElementById('wd-feel').innerText = `${curFeel}°`;
+        document.getElementById('wd-pop').innerText = `${curPop}%`;
+        document.getElementById('wd-uv').innerText = curUv;
+        document.getElementById('wd-wind').innerText = `${curWind} km/h`;
+
+
+        // --- 2. 更新日出日落 ---
         const todayIndex = 0;
-        // 取得日出日落的小時 (例如 06:40 -> 6, 17:20 -> 17) 用於判斷日夜
         const sunriseStr = data.daily.sunrise[todayIndex].split('T')[1];
         const sunsetStr = data.daily.sunset[todayIndex].split('T')[1];
         const sunriseHour = parseInt(sunriseStr.split(':')[0]);
@@ -7456,34 +7651,19 @@ async function fetchAndShowDetail(lat, lon, locName) {
         document.getElementById('wd-sunrise').innerText = sunriseStr;
         document.getElementById('wd-sunset').innerText = sunsetStr;
 
-        // --- 2. 渲染 24小時預報 ---
+        // --- 3. 渲染 24小時預報 (維持不變) ---
         const hourlyContainer = document.getElementById('wd-hourly-list');
         hourlyContainer.innerHTML = '';
-        const currentHour = new Date().getHours();
-        let startIdx = 0;
-        const dataDate = data.hourly.time[0].split('T')[0];
-        const todayDate = new Date().toISOString().split('T')[0];
-        
-        if (dataDate === todayDate) {
-            startIdx = currentHour;
-        }
 
         for (let i = startIdx; i < startIdx + 24; i++) {
             if (!data.hourly.time[i]) break;
             
-            // 取得該資料的小時數 (0-23)
             let hourRaw = parseInt(data.hourly.time[i].split('T')[1].split(':')[0]);
-            
-            // [修正 1] 如果是迴圈的第一筆資料，標籤顯示「現在」，否則顯示「XX時」
             let timeStr = (i === startIdx) ? "現在" : `${hourRaw}時`;
-
-            // [修正 2] 判斷日夜：如果 時間 < 日出 或 時間 >= 日落，就是晚上
             let isNight = (hourRaw < sunriseHour || hourRaw >= sunsetHour);
-
             const temp = Math.round(data.hourly.temperature_2m[i]);
             const code = data.hourly.weathercode[i];
             
-            // [修正 3] 機率傳入 0 (不顯示水位)，並傳入 isNight 參數
             const iconSvg = getSimpleIconSvg(code, 0, `h${i}`, isNight); 
             const statusText = getWeatherStatusText(code);
 
@@ -7499,7 +7679,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
             hourlyContainer.appendChild(item);
         }
 
-        // --- 3. 渲染未來 7 天預報 (列表) ---
+        // --- 4. 渲染未來 7 天預報 (維持不變) ---
         const dailyContainer = document.getElementById('wd-daily-list');
         dailyContainer.innerHTML = '';
         
@@ -7510,10 +7690,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
             const code = data.daily.weathercode[i];
             const popMax = data.daily.precipitation_probability_max[i];
             
-            // 日預報通常顯示白天的圖示 (isNight = false)
-            // 這裡保留 popMax 以顯示藍色水位
             const iconSvg = getSimpleIconSvg(code, popMax, `d${i}`, false);
-
             const dateObj = new Date(data.daily.time[i]);
             const dayNames = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
             const dayName = dayNames[dateObj.getDay()];
