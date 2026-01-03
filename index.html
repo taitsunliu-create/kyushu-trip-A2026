@@ -7408,7 +7408,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
 // [修正] 最終除錯版：修復雷雨被誤判為雨天(Code 80+)的問題
 // [修改] 最終版：加入「霧」的水位計支援 + 所有修復
 // [修改] 最終美化版：加入精緻「六角雪花」造型 + 完整功能
-// [修改] 數學修正版：使用極座標確保 6 個角的 V 型開口完全一致 (三叉戟雪花)
+// [修改] 最終華麗版：雙重平行寬角 V 型雪花 (直線貫穿)
 function getSimpleIconSvg(code, pop, uid, isNight = false) {
     const originalColor = "#374151"; 
     const waterColor = "#60A5FA";    
@@ -7480,29 +7480,21 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
             <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>
         `;
     } else if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) {
-        // === [修正重點] 雪：數學極座標修正版 (全對稱) ===
-        // 所有 V 型開口角度與長度皆經過 cos/sin 運算校正
+        // === [修正重點] 雪：雙重平行寬角 V 型 ===
         
-        // 1. 中央六角冰核 (R=3)
+        // 1. 中央六角冰核 (維持)
         path = `<path d="M12 9 L14.6 10.5 L14.6 13.5 L12 15 L9.4 13.5 L9.4 10.5 Z"></path>`;
 
-        // 2. 六條直線主幹 (R=3 到 R=9.5)
+        // 2. 六條直線主幹 (維持貫穿)
         path += `
-            <path d="M12 9 V2.5 M12 15 V21.5"></path>           <path d="M14.6 10.5 L20.2 7.3 M14.6 13.5 L20.2 16.7"></path> <path d="M9.4 13.5 L3.8 16.7 M9.4 10.5 L3.8 7.3"></path>     `;
-
-        // 3. V 型樹枝 (基底 R=6，尖端 R=8.15，開口對稱)
-        path += `
-            <path d="M10.5 4 L12 6 L13.5 4"></path>
-            <path d="M10.5 20 L12 18 L13.5 20"></path>
-            
-            <path d="M18.2 6.7 L17.2 9 L19.7 9.3"></path>
-            
-            <path d="M19.7 14.7 L17.2 15 L18.2 17.3"></path>
-            
-            <path d="M5.8 17.3 L6.8 15 L4.3 14.7"></path>
-            
-            <path d="M4.3 9.3 L6.8 9 L5.8 6.7"></path>
+            <path d="M12 9 V2.5 M12 15 V21.5"></path>
+            <path d="M14.6 10.5 L20.2 7.3 M14.6 13.5 L20.2 16.7"></path>
+            <path d="M9.4 13.5 L3.8 16.7 M9.4 10.5 L3.8 7.3"></path>
         `;
+
+        // 3. 雙重平行 V 型 (角度加寬，兩層)
+        path += `
+            <path d="M9.5 5 L12 7 L14.5 5"></path> <path d="M9.5 3 L12 5 L14.5 3"></path> <path d="M9.5 19 L12 17 L14.5 19"></path> <path d="M9.5 21 L12 19 L14.5 21"></path> <path d="M16 6 L16.5 8.8 L19 7.8"></path> <path d="M17.5 4.5 L18 7.3 L20.5 6.3"></path> <path d="M19 16.2 L16.5 15.2 L16 18"></path> <path d="M20.5 17.7 L18 16.7 L17.5 19.5"></path> <path d="M5 16.2 L7.5 15.2 L8 18"></path> <path d="M3.5 17.7 L6 16.7 L6.5 19.5"></path> <path d="M8 6 L7.5 8.8 L5 7.8"></path> <path d="M6.5 4.5 L6 7.3 L3.5 6.3"></path> `;
 
     } else if (code >= 95) {
         // === 雷雨 ===
