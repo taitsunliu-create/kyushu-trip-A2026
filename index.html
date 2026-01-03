@@ -7408,6 +7408,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
 // [修正] 最終除錯版：修復雷雨被誤判為雨天(Code 80+)的問題
 // [修改] 最終版：加入「霧」的水位計支援 + 所有修復
 // [修改] 最終美化版：加入精緻「六角雪花」造型 + 完整功能
+f// [修改] 最終華麗版：實作「樹枝狀冰晶」雪花 + 完整全功能
 function getSimpleIconSvg(code, pop, uid, isNight = false) {
     const originalColor = "#374151"; 
     const waterColor = "#60A5FA";    
@@ -7468,10 +7469,10 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
         // === 多雲 ===
         path = `<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>`;
     } else if (code >= 45 && code <= 48) {
-        // === 霧 (水位計支援版) ===
+        // === 霧 ===
         path = `<path d="M4 10h16 M4 14h16 M4 18h16"></path>`;
     } else if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
-        // === 雨 (強制藍色雨滴) ===
+        // === 雨 ===
         path = `
             <line x1="16" y1="13" x2="16" y2="21" stroke="${waterColor}"></line>
             <line x1="8" y1="13" x2="8" y2="21" stroke="${waterColor}"></line>
@@ -7479,18 +7480,19 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
             <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>
         `;
     } else if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) {
-        // === [本次修改] 雪 (六角冰晶造型) ===
-        // 使用 path 畫出中間的六邊形 + 向外延伸的6條線
-        // 這樣的寫法可以確保漸層水位是由下往上水平填充
-        
-        // 1. 中間的小六邊形
-        path = `<path d="M12 9 L14.6 10.5 L14.6 13.5 L12 15 L9.4 13.5 L9.4 10.5 Z"></path>`;
-        
-        // 2. 向外延伸的6根冰晶射線 (不使用 rotate 變形，確保水位正常)
-        path += `
-            <line x1="12" y1="9" x2="12" y2="3"></line>    <line x1="12" y1="15" x2="12" y2="21"></line>  <line x1="14.6" y1="10.5" x2="19.8" y2="7.5"></line> <line x1="14.6" y1="13.5" x2="19.8" y2="16.5"></line> <line x1="9.4" y1="13.5" x2="4.2" y2="16.5"></line>  <line x1="9.4" y1="10.5" x2="4.2" y2="7.5"></line>   `;
+        // === [本次修改重點] 雪 (樹枝狀冰晶造型) ===
+        // 為了支援水位計，必須使用絕對座標手繪所有分岔，不能使用旋轉
+        path = `
+            <path d="M12 2 V22 M3.3 7 L20.7 17 M20.7 7 L3.3 17"></path>
+            <path d="M9 6 L12 9 L15 6 M10 4 L12 6 L14 4"></path>
+            <path d="M9 18 L12 15 L15 18 M10 20 L12 18 L14 20"></path>
+            <path d="M17.5 6.5 L16.3 9.2 L19.8 9.2 M15.5 10 L14.3 12.7 L17.8 12.7"></path>
+            <path d="M17.5 17.5 L16.3 14.8 L19.8 14.8 M15.5 14 L14.3 11.3 L17.8 11.3"></path>
+            <path d="M6.5 17.5 L7.7 14.8 L4.2 14.8 M8.5 14 L9.7 11.3 L6.2 11.3"></path>
+            <path d="M6.5 6.5 L7.7 9.2 L4.2 9.2 M8.5 10 L9.7 12.7 L6.2 12.7"></path>
+        `;
     } else if (code >= 95) {
-        // === 雷雨 (雙閃電) ===
+        // === 雷雨 ===
         path = `<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>`;
         path += `<polygon points="19 2 16 7 18 7 17 11 22 5 20 5 19 2"></polygon>`;
     } else {
