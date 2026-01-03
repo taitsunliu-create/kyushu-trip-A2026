@@ -1728,18 +1728,6 @@
             text-align: right;
             color: #4B5563; /* 原本是 #1F2937 (太深)，現在改淡一點 */
         }
-/* [修改] 日出日落區塊 - 去除突兀邊框，改為極簡風格 */
-        .astro-box {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            /* 移除原本的漸層與橘色邊框，改用極淡的背景融入 */
-            background: rgba(0, 0, 0, 0.03); 
-            padding: 15px 0;
-            border-radius: 16px;
-            margin-bottom: 20px;
-            border: none; /* 移除邊框 */
-        }
         /* [新增] 即時天氣儀表板樣式 */
         .cw-container {
             margin-bottom: 20px;
@@ -1811,6 +1799,18 @@
             font-size: 0.95rem;
             font-weight: 700;
             color: #374151;
+        }
+/* [修改] 日出日落區塊 - 去除突兀邊框，改為極簡風格 */
+        .astro-box {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            /* 移除原本的漸層與橘色邊框，改用極淡的背景融入 */
+            background: rgba(0, 0, 0, 0.03); 
+            padding: 15px 0;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border: none; /* 移除邊框 */
         }
 /* [修改] 日出日落區塊佈局 */
 .astro-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
@@ -4235,7 +4235,8 @@ header.is-night {
 <div id="weather-detail-modal" class="modal-overlay">
     <div class="modal-box" style="max-width: 400px; padding: 20px; max-height: 85vh; overflow-y: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-           <div class="modal-title" id="wd-title">--</div>
+            <div class="modal-title" id="wd-title" style="margin:0; font-size:1.3rem;">--</div>
+            </div>
 
         <div class="cw-container">
             <div class="cw-header">
@@ -7523,18 +7524,60 @@ async function fetchAndShowDetail(lat, lon, locName) {
     // 顯示 Loading
     document.getElementById('weather-detail-modal').style.display = 'flex';
     document.getElementById('wd-title').innerText = locName;
+    
+    // 初始化儀表板數值
+    document.getElementById('wd-cur-temp').innerText = '--°';
+    document.getElementById('wd-cur-desc').innerText = '載入中...';
+    document.getElementById('wd-feel').innerText = '--';
+    document.getElementById('wd-pop').innerText = '--';
+    document.getElementById('wd-uv').innerText = '--';
+    document.getElementById('wd-wind').innerText = '--';
+
     document.getElementById('wd-hourly-list').innerHTML = '<div style="padding:10px;">資料載入中...</div>';
     document.getElementById('wd-daily-list').innerHTML = '';
     
     try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max&current_weather=true&timezone=auto`;
+        // [關鍵修改] URL 新增 hourly 參數: apparent_temperature (體感), uv_index (紫外線), wind_speed_10m (風速)
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,apparent_temperature,uv_index,wind_speed_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max&current_weather=true&timezone=auto`;
         
         const res = await fetch(url);
         const data = await res.json();
         
-        // --- 1. 更新日出日落 ---
+        // --- 0. 處理時間索引 (找到目前這小時的資料) ---
+        const currentHour = new Date().getHours();
+        let startIdx = 0;
+        const dataDate = data.hourly.time[0].split('T')[0];
+        const todayDate = new Date().toISOString().split('T')[0];
+        
+        // 如果 API 回傳的第一天是今天，就從目前小時開始抓
+        if (dataDate === todayDate) {
+            startIdx = currentHour;
+        }
+
+        // --- 1. 更新上方儀表板 (Dashboard) ---
+        // 使用目前這小時的詳細數據
+        const curTemp = Math.round(data.current_weather.temperature);
+        const curCode = data.current_weather.weathercode;
+        const curFeel = Math.round(data.hourly.apparent_temperature[startIdx]);
+        const curPop = data.hourly.precipitation_probability[startIdx];
+        const curUv = data.hourly.uv_index[startIdx];
+        const curWind = Math.round(data.hourly.wind_speed_10m[startIdx]);
+        
+        const todayMax = Math.round(data.daily.temperature_2m_max[0]);
+        const todayMin = Math.round(data.daily.temperature_2m_min[0]);
+
+        document.getElementById('wd-cur-temp').innerText = `${curTemp}°`;
+        document.getElementById('wd-cur-desc').innerText = getWeatherDescText(curCode); // 使用既有的文字轉換函式
+        document.getElementById('wd-cur-hl').innerText = `高:${todayMax}° 低:${todayMin}°`;
+        
+        document.getElementById('wd-feel').innerText = `${curFeel}°`;
+        document.getElementById('wd-pop').innerText = `${curPop}%`;
+        document.getElementById('wd-uv').innerText = curUv;
+        document.getElementById('wd-wind').innerText = `${curWind} km/h`;
+
+
+        // --- 2. 更新日出日落 ---
         const todayIndex = 0;
-        // 取得日出日落的小時 (例如 06:40 -> 6, 17:20 -> 17) 用於判斷日夜
         const sunriseStr = data.daily.sunrise[todayIndex].split('T')[1];
         const sunsetStr = data.daily.sunset[todayIndex].split('T')[1];
         const sunriseHour = parseInt(sunriseStr.split(':')[0]);
@@ -7543,34 +7586,19 @@ async function fetchAndShowDetail(lat, lon, locName) {
         document.getElementById('wd-sunrise').innerText = sunriseStr;
         document.getElementById('wd-sunset').innerText = sunsetStr;
 
-        // --- 2. 渲染 24小時預報 ---
+        // --- 3. 渲染 24小時預報 (維持不變) ---
         const hourlyContainer = document.getElementById('wd-hourly-list');
         hourlyContainer.innerHTML = '';
-        const currentHour = new Date().getHours();
-        let startIdx = 0;
-        const dataDate = data.hourly.time[0].split('T')[0];
-        const todayDate = new Date().toISOString().split('T')[0];
-        
-        if (dataDate === todayDate) {
-            startIdx = currentHour;
-        }
 
         for (let i = startIdx; i < startIdx + 24; i++) {
             if (!data.hourly.time[i]) break;
             
-            // 取得該資料的小時數 (0-23)
             let hourRaw = parseInt(data.hourly.time[i].split('T')[1].split(':')[0]);
-            
-            // [修正 1] 如果是迴圈的第一筆資料，標籤顯示「現在」，否則顯示「XX時」
             let timeStr = (i === startIdx) ? "現在" : `${hourRaw}時`;
-
-            // [修正 2] 判斷日夜：如果 時間 < 日出 或 時間 >= 日落，就是晚上
             let isNight = (hourRaw < sunriseHour || hourRaw >= sunsetHour);
-
             const temp = Math.round(data.hourly.temperature_2m[i]);
             const code = data.hourly.weathercode[i];
             
-            // [修正 3] 機率傳入 0 (不顯示水位)，並傳入 isNight 參數
             const iconSvg = getSimpleIconSvg(code, 0, `h${i}`, isNight); 
             const statusText = getWeatherStatusText(code);
 
@@ -7586,7 +7614,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
             hourlyContainer.appendChild(item);
         }
 
-        // --- 3. 渲染未來 7 天預報 (列表) ---
+        // --- 4. 渲染未來 7 天預報 (維持不變) ---
         const dailyContainer = document.getElementById('wd-daily-list');
         dailyContainer.innerHTML = '';
         
@@ -7597,10 +7625,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
             const code = data.daily.weathercode[i];
             const popMax = data.daily.precipitation_probability_max[i];
             
-            // 日預報通常顯示白天的圖示 (isNight = false)
-            // 這裡保留 popMax 以顯示藍色水位
             const iconSvg = getSimpleIconSvg(code, popMax, `d${i}`, false);
-
             const dateObj = new Date(data.daily.time[i]);
             const dayNames = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
             const dayName = dayNames[dateObj.getDay()];
