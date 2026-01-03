@@ -6700,14 +6700,14 @@ function compressImage(file, maxWidth, quality) {
 
 // [修正] 防止天氣橫向捲動區與全域換頁手勢衝突
 // [修正] 防止天氣橫向捲動區與全域換頁手勢衝突
+// [修正] 防止天氣視窗滑動時誤觸底層換頁
 function preventSwipeConflict() {
-    // 定義阻擋冒泡的函式
-    const stopPropagation = (e) => {
-        // 關鍵：告訴瀏覽器「事件到此為止」，不要往上傳給翻頁引擎
+    // 定義一個阻擋訊號往上傳的函式
+    const stopPropagation = (e) => { 
         e.stopPropagation(); 
     };
 
-    // 1. 橫向捲動區 (小時預報)
+    // 1. 針對「橫向」捲動的小時預報 (維持原有功能)
     const hourlyScroll = document.getElementById('wd-hourly-list');
     if (hourlyScroll) {
         hourlyScroll.addEventListener('touchstart', stopPropagation, { passive: true });
@@ -6716,7 +6716,8 @@ function preventSwipeConflict() {
         hourlyScroll.addEventListener('wheel', stopPropagation, { passive: true });
     }
 
-    // 2. [新增] 天氣預報視窗的垂直捲動容器 (避免滑到底層)
+    // 2. [新增] 針對「垂直」捲動的天氣視窗白色區塊 (.modal-box)
+    // 這行是解決「上下滑動誤控」的關鍵
     const weatherModalBox = document.querySelector('#weather-detail-modal .modal-box');
     if (weatherModalBox) {
         weatherModalBox.addEventListener('touchstart', stopPropagation, { passive: true });
