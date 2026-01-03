@@ -1610,6 +1610,47 @@
     /* 👇 [新增] 讓滑鼠游標變更，提示可抓取 */
     cursor: grab;
 }
+/* --- [修改] Modal 頭部按鈕群組樣式 (對齊與防衝突) --- */
+.modal-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* 按鈕之間的間距 */
+}
+
+/* 統一定義重整與關閉按鈕的大小與外觀 */
+.btn-header-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%; /* 圓形 */
+    background-color: #F3F4F6; /* 淺灰底色，讓點擊範圍更明確 */
+    border: none;
+    color: #4B5563;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    /* 關鍵：取消原本 X 按鈕的絕對定位，改回標準流 */
+    position: static !important; 
+    margin: 0 !important;
+}
+
+.btn-header-icon:active {
+    background-color: #E5E7EB;
+    transform: scale(0.92);
+}
+
+.btn-header-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.5;
+}
+
+/* 確保 Modal 內部捲動時不觸發底層翻頁 (CSS 輔助) */
+#weather-detail-modal .modal-box {
+    overscroll-behavior: contain; /* 防止捲動鍊溢出 */
+}
 
 /* (同時建議在下方加入這行，隱藏醜醜的捲軸但保留功能) */
 .weather-detail-scroll::-webkit-scrollbar {
@@ -4233,20 +4274,26 @@ header.is-night {
     </button>
 
 <div id="weather-detail-modal" class="modal-overlay">
-    <div class="modal-box" style="max-width: 400px; padding: 20px; max-height: 85vh; overflow-y: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <div class="modal-box scrollable-modal-content" style="max-width: 400px; padding: 20px; max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0;">
            <div class="modal-title" id="wd-title" style="margin:0; font-size:1.3rem;">--</div>
            
-           <div style="display: flex; align-items: center; gap: 8px;">
-               <button id="wd-btn-refresh" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; color:#9CA3AF;">
-                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+           <div class="modal-header-actions">
+               <button id="wd-btn-refresh" class="btn-header-icon">
+                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                        <path d="M23 4v6h-6"></path>
                        <path d="M1 20v-6h6"></path>
                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
                    </svg>
                </button>
                
-               <button class="btn-modal-close-x" onclick="document.getElementById('weather-detail-modal').style.display='none'" style="position: static; margin:0;">×</button>
+               <button class="btn-header-icon" onclick="document.getElementById('weather-detail-modal').style.display='none'">
+                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                       <line x1="18" y1="6" x2="6" y2="18"></line>
+                       <line x1="6" y1="6" x2="18" y2="18"></line>
+                   </svg>
+               </button>
            </div>
         </div>
 
@@ -4331,7 +4378,7 @@ header.is-night {
         <div style="font-size: 0.9rem; font-weight: 700; margin-top: 10px; margin-bottom: 5px; color: #4B5563;">未來 7 天預報</div>
         <div id="wd-daily-list"></div>
         
-        </div>
+    </div>
 </div>
     <div id="lightbox-modal" class="lightbox-overlay" onclick="closeLightbox()">
         <span class="lightbox-close">&times;</span>
@@ -6710,33 +6757,30 @@ function compressImage(file, maxWidth, quality) {
 
 // --- 👇 請在此處插入修正衝突的程式碼 👇 ---
 
-// [修正] 防止天氣橫向捲動區與全域換頁手勢衝突
-// [修正] 防止天氣橫向捲動區與全域換頁手勢衝突
-// [修正] 防止天氣視窗滑動時誤觸底層換頁
+// [修正] 防止天氣彈窗與全域換頁手勢衝突
 function preventSwipeConflict() {
     // 定義一個阻擋訊號往上傳的函式
     const stopPropagation = (e) => { 
         e.stopPropagation(); 
+        // 不需要 preventDefault，因為我們仍需要內部的捲動功能
     };
 
-    // 1. 針對「橫向」捲動的小時預報 (維持原有功能)
+    // 1. 針對「橫向」捲動的小時預報
     const hourlyScroll = document.getElementById('wd-hourly-list');
     if (hourlyScroll) {
-        hourlyScroll.addEventListener('touchstart', stopPropagation, { passive: true });
-        hourlyScroll.addEventListener('touchmove', stopPropagation, { passive: true });
-        hourlyScroll.addEventListener('touchend', stopPropagation, { passive: true });
-        hourlyScroll.addEventListener('wheel', stopPropagation, { passive: true });
+        ['touchstart', 'touchmove', 'touchend', 'wheel'].forEach(evt => {
+            hourlyScroll.addEventListener(evt, stopPropagation, { passive: true });
+        });
     }
 
-    // 2. [新增] 針對「垂直」捲動的天氣視窗白色區塊 (.modal-box)
-    // 這行是解決「上下滑動誤控」的關鍵
-    const weatherModalBox = document.querySelector('#weather-detail-modal .modal-box');
-    if (weatherModalBox) {
-        weatherModalBox.addEventListener('touchstart', stopPropagation, { passive: true });
-        weatherModalBox.addEventListener('touchmove', stopPropagation, { passive: true });
-        weatherModalBox.addEventListener('touchend', stopPropagation, { passive: true });
-        weatherModalBox.addEventListener('wheel', stopPropagation, { passive: true });
-    }
+    // 2. [強化] 針對所有帶有 scrollable-modal-content 的容器 (天氣詳細視窗)
+    // 這樣可以確保手指只要在這個白色方塊內滑動，絕對不會觸發底層翻頁
+    const scrollableModals = document.querySelectorAll('.scrollable-modal-content');
+    scrollableModals.forEach(modal => {
+        ['touchstart', 'touchmove', 'touchend', 'wheel'].forEach(evt => {
+            modal.addEventListener(evt, stopPropagation, { passive: true });
+        });
+    });
 }
 
 // 確保頁面載入完成後執行綁定
