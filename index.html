@@ -5289,36 +5289,21 @@ function getSmartAdviceText(temp, weatherCode) {
         }
 
 
-        // [優化] 點擊背景關閉視窗 (統一管理，支援 iOS)
-        window.addEventListener('click', function(event) {
-            // 定義所有需要「點擊背景關閉」的視窗 ID
-            const modals = [
-                'note-modal',           // 隨身筆記
-                'location-modal',       // 手動定位
-                'calc-modal',           // 匯率計算機
-                'weather-detail-modal', // 詳細天氣
-                'img-preview-modal'     // 圖片預覽
-            ];
-
-            modals.forEach(id => {
-                const modal = document.getElementById(id);
-                // 檢查：modal 存在 + 目前是顯示狀態 + 點擊目標正是半透明背景(而非內容)
-                if (modal && modal.style.display !== 'none' && event.target === modal) {
+        // [修正版] 點擊背景關閉視窗 (改用直接綁定，解決手機觸控無效問題)
+        // 自動抓取所有 class 為 modal-overlay 的遮罩層
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                // 判斷關鍵：只有當點擊的目標是「背景本人」時才關閉
+                // 如果點到內部的白色視窗 (modal-box)，e.target 會是 box 而不是 overlay，就不會觸發
+                if (e.target === this) {
                     
-                    // 特殊處理：圖片預覽視窗需要清理暫存
-                    if (id === 'img-preview-modal' && typeof cancelImagePreview === 'function') {
+                    // 特殊處理：如果是圖片預覽視窗，需要清空暫存
+                    if (this.id === 'img-preview-modal' && typeof cancelImagePreview === 'function') {
                         cancelImagePreview();
                     } else {
-                        modal.style.display = "none";
+                        this.style.display = 'none';
                     }
                 }
-            });
-        });
-
-        // [補充] 確保內容區域點擊不會冒泡導致誤關 (針對部分手機瀏覽器優化)
-        document.querySelectorAll('.modal-box').forEach(box => {
-            box.addEventListener('click', function(e) {
-                e.stopPropagation();
             });
         });
         
