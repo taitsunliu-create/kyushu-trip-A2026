@@ -1618,13 +1618,13 @@
 }
 
 /* 統一定義重整與關閉按鈕的大小與外觀 */
-/* 統一定義重整與關閉按鈕的大小與外觀 */
+/* 統一定義重整與關閉按鈕 (透明背景版) */
 .btn-header-icon {
     width: 36px;
     height: 36px;
     border-radius: 50%;
     
-    background-color: transparent; /* [修改] 去除背景色，變為透明 */
+    background-color: transparent; /* 背景透明 */
     
     border: none;
     color: #4B5563;
@@ -1632,27 +1632,16 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
     
-    /* 關鍵：取消原本 X 按鈕的絕對定位，改回標準流 */
+    /* 強制設定 */
     position: static !important; 
     margin: 0 !important;
 }
 
-/* [新增] 滑鼠移入時才顯示淡淡的背景，增加互動感 */
-.btn-header-icon:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-}
-
-.btn-header-icon:active {
-    background-color: rgba(0, 0, 0, 0.1);
-    transform: scale(0.92);
-}
-
 .btn-header-icon svg {
-    width: 24px;  /* [微調] 因為去除了背景，圖示稍微加大一點點視覺更平衡 */
+    width: 24px;
     height: 24px;
-    stroke-width: 2; /* 線條稍微細一點點，符合簡約風格 */
+    stroke-width: 2;
 }
 /* --- [修改] Modal 頭部按鈕群組樣式 (對齊與防衝突) --- */
 .modal-header-actions {
