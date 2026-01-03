@@ -7408,7 +7408,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
 // [修正] 最終除錯版：修復雷雨被誤判為雨天(Code 80+)的問題
 // [修改] 最終版：加入「霧」的水位計支援 + 所有修復
 // [修改] 最終美化版：加入精緻「六角雪花」造型 + 完整功能
-// [修改] 最終客製版：三叉戟風格 (Trident) 雪花 - 直線穿過 Y 字
+// [修改] 數學修正版：使用極座標確保 6 個角的 V 型開口完全一致 (三叉戟雪花)
 function getSimpleIconSvg(code, pop, uid, isNight = false) {
     const originalColor = "#374151"; 
     const waterColor = "#60A5FA";    
@@ -7480,26 +7480,28 @@ function getSimpleIconSvg(code, pop, uid, isNight = false) {
             <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>
         `;
     } else if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) {
-        // === [修正重點] 雪：三叉戟造型 (直線穿過V) ===
+        // === [修正重點] 雪：數學極座標修正版 (全對稱) ===
+        // 所有 V 型開口角度與長度皆經過 cos/sin 運算校正
         
-        // 1. 中央六角冰核 (維持加大半徑 ~3)
+        // 1. 中央六角冰核 (R=3)
         path = `<path d="M12 9 L14.6 10.5 L14.6 13.5 L12 15 L9.4 13.5 L9.4 10.5 Z"></path>`;
 
-        // 2. 六條輻射狀主幹 (從中心直接穿出去，長度拉長，作為"穿過V"的那條直線)
+        // 2. 六條直線主幹 (R=3 到 R=9.5)
         path += `
-            <path d="M12 9 V2.5 M12 15 V21.5"></path>  <path d="M14.6 10.5 L20.2 7.2 M14.6 13.5 L20.2 16.8"></path> <path d="M9.4 13.5 L3.8 16.8 M9.4 10.5 L3.8 7.2"></path>   `;
+            <path d="M12 9 V2.5 M12 15 V21.5"></path>           <path d="M14.6 10.5 L20.2 7.3 M14.6 13.5 L20.2 16.7"></path> <path d="M9.4 13.5 L3.8 16.7 M9.4 10.5 L3.8 7.3"></path>     `;
 
-        // 3. V 型分岔 (放置在主幹中段，讓主幹看起來像穿過去)
-        // 每個 V 的底部都「黏」在主幹上，開口朝外
+        // 3. V 型樹枝 (基底 R=6，尖端 R=8.15，開口對稱)
         path += `
             <path d="M10.5 4 L12 6 L13.5 4"></path>
             <path d="M10.5 20 L12 18 L13.5 20"></path>
             
-            <path d="M18 6.5 L17.2 8.8 L20 8.5"></path>
-            <path d="M18 17.5 L17.2 15.2 L20 15.5"></path>
+            <path d="M18.2 6.7 L17.2 9 L19.7 9.3"></path>
             
-            <path d="M6 17.5 L6.8 15.2 L4 15.5"></path>
-            <path d="M6 6.5 L6.8 8.8 L4 8.5"></path>
+            <path d="M19.7 14.7 L17.2 15 L18.2 17.3"></path>
+            
+            <path d="M5.8 17.3 L6.8 15 L4.3 14.7"></path>
+            
+            <path d="M4.3 9.3 L6.8 9 L5.8 6.7"></path>
         `;
 
     } else if (code >= 95) {
