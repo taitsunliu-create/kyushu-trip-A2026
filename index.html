@@ -7662,21 +7662,41 @@ async function fetchAndShowDetail(lat, lon, locName) {
         document.getElementById('wd-sunrise').innerText = sunriseStr;
         document.getElementById('wd-sunset').innerText = sunsetStr;
 
-        // --- 3. 渲染 24小時預報 (維持不變) ---
+       // --- 3. 渲染 24小時預報 (修正版) ---
         const hourlyContainer = document.getElementById('wd-hourly-list');
         hourlyContainer.innerHTML = '';
 
         for (let i = startIdx; i < startIdx + 24; i++) {
+            // 安全檢查：若資料不足則提早結束
             if (!data.hourly.time[i]) break;
             
             let hourRaw = parseInt(data.hourly.time[i].split('T')[1].split(':')[0]);
             let timeStr = (i === startIdx) ? "現在" : `${hourRaw}時`;
-            let isNight = (hourRaw < sunriseHour || hourRaw >= sunsetHour);
+            
+            // 日夜判斷 (若資料不足預設為白天)
+            let isNight = false;
+            if (!isNaN(sunriseHour) && !isNaN(sunsetHour)) {
+                isNight = (hourRaw < sunriseHour || hourRaw >= sunsetHour);
+            }
+
             const temp = Math.round(data.hourly.temperature_2m[i]);
             const code = data.hourly.weathercode[i];
             
-            const iconSvg = getSimpleIconSvg(code, 0, `h${i}`, isNight); 
-            const statusText = getWeatherStatusText(code);
+            // [防呆修正] 確保 getSimpleIconSvg 存在，否則給預設值
+            let iconSvg = '';
+            if (typeof getSimpleIconSvg === 'function') {
+                iconSvg = getSimpleIconSvg(code, 0, `h${i}`, isNight); 
+            }
+
+            // [防呆修正] 確保 getWeatherStatusText 存在，否則使用 getWeatherDescText
+            let statusText = '';
+            if (typeof getWeatherStatusText === 'function') {
+                statusText = getWeatherStatusText(code);
+            } else if (typeof getWeatherDescText === 'function') {
+                statusText = getWeatherDescText(code);
+            } else {
+                statusText = '--';
+            }
 
             const item = document.createElement('div');
             item.className = 'wd-hour-item';
