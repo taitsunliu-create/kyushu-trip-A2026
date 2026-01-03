@@ -1702,15 +1702,25 @@
     margin-left: 6px;
 }
 
-/* 4. 氣溫：保持靠右 */
-.wd-day-temp { 
-    flex: 1; 
-    text-align: right; 
-    font-family: monospace; 
-    font-weight: 600; 
-}
-.wd-temp-low { color: #6B7280; margin-right: 8px; }
-.wd-temp-high { color: #1F2937; }
+/* 4. 氣溫：改為 Flex 佈局 + 固定寬度，解決對齊問題 */
+        .wd-day-temp { 
+            flex: 1; 
+            display: flex;             /* [修改] 啟用 Flexbox */
+            justify-content: flex-end; /* [修改] 整體靠右 */
+            gap: 10px;                 /* [修改] 低溫與高溫之間的固定間距 */
+            font-family: monospace; 
+            font-weight: 600; 
+        }
+        
+        /* [新增] 設定固定寬度讓數字垂直對齊成兩列 */
+        .wd-temp-low, .wd-temp-high {
+            display: inline-block;
+            width: 36px;       /* [關鍵] 強制固定寬度，創造隱形欄位 */
+            text-align: right; /* [關鍵] 數字在欄位內靠右對齊 */
+        }
+
+        .wd-temp-low { color: #9CA3AF; } /* [微調] 顏色稍微調淡一點區隔 */
+        .wd-temp-high { color: #1F2937; }
 
 /* [修改] 日出日落區塊 - 去除突兀邊框，改為極簡風格 */
         .astro-box {
