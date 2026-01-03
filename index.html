@@ -948,6 +948,7 @@
             display: none; justify-content: center; align-items: center;
             backdrop-filter: blur(3px);
             animation: fadeIn 0.2s;
+            cursor: pointer; /* [新增] 這行是關鍵！讓手機知道背景可點擊 */
         }
         .modal-box {
             background: white; width: 90%; max-width: 320px;
@@ -5288,25 +5289,38 @@ function getSmartAdviceText(temp, weatherCode) {
         }
 
 
-        // [修改] 點擊背景關閉視窗 (支援：筆記、位置、計算機、詳細天氣)
-        window.onclick = function(event) {
-            const nModal = document.getElementById('note-modal');         // 筆記
-            const lModal = document.getElementById('location-modal');     // 手動定位
-            const cModal = document.getElementById('calc-modal');         // 計算機
-            const wModal = document.getElementById('weather-detail-modal'); // [新增] 天氣詳情
-            const pModal = document.getElementById('img-preview-modal');  // [新增] 圖片預覽
-            
-            // 只有當點擊的目標等於遮罩層 (Overlay) 本身時才關閉，點擊內容區塊不會關閉
-            if (event.target == nModal) nModal.style.display = "none";
-            if (event.target == lModal) lModal.style.display = "none";
-            if (event.target == cModal) cModal.style.display = "none";
-            if (event.target == wModal) wModal.style.display = "none"; // 關閉天氣詳情
-            if (event.target == pModal) {
-                // 圖片預覽比較特殊，關閉時要順便清除暫存，這裡呼叫對應的取消函式較安全
-                if(typeof cancelImagePreview === 'function') cancelImagePreview();
-                else pModal.style.display = "none";
-            }
-        }
+        // [優化] 點擊背景關閉視窗 (統一管理，支援 iOS)
+        window.addEventListener('click', function(event) {
+            // 定義所有需要「點擊背景關閉」的視窗 ID
+            const modals = [
+                'note-modal',           // 隨身筆記
+                'location-modal',       // 手動定位
+                'calc-modal',           // 匯率計算機
+                'weather-detail-modal', // 詳細天氣
+                'img-preview-modal'     // 圖片預覽
+            ];
+
+            modals.forEach(id => {
+                const modal = document.getElementById(id);
+                // 檢查：modal 存在 + 目前是顯示狀態 + 點擊目標正是半透明背景(而非內容)
+                if (modal && modal.style.display !== 'none' && event.target === modal) {
+                    
+                    // 特殊處理：圖片預覽視窗需要清理暫存
+                    if (id === 'img-preview-modal' && typeof cancelImagePreview === 'function') {
+                        cancelImagePreview();
+                    } else {
+                        modal.style.display = "none";
+                    }
+                }
+            });
+        });
+
+        // [補充] 確保內容區域點擊不會冒泡導致誤關 (針對部分手機瀏覽器優化)
+        document.querySelectorAll('.modal-box').forEach(box => {
+            box.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
         
 // [修改] 兩段式分享功能 (解決瀏覽器阻擋視窗問題)
         // 狀態標記：紀錄目前是否已經分析完成
