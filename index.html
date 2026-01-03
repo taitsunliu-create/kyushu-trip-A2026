@@ -1619,10 +1619,10 @@
 
 /* 統一定義重整與關閉按鈕的大小與外觀 */
 .btn-header-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%; /* 圓形 */
-    background-color: #F3F4F6; /* 淺灰底色，讓點擊範圍更明確 */
+    width: 42px; /* [修改] 加大按鈕尺寸 */
+    height: 42px;
+    border-radius: 50%;
+    background-color: #F3F4F6;
     border: none;
     color: #4B5563;
     display: flex;
@@ -1631,9 +1631,17 @@
     cursor: pointer;
     transition: all 0.2s;
     
-    /* 關鍵：取消原本 X 按鈕的絕對定位，改回標準流 */
+    /* 確保對齊與防跑版 */
     position: static !important; 
     margin: 0 !important;
+    flex-shrink: 0; /* 防止被擠壓 */
+}
+
+/* [新增] 讓內部的 SVG 圖示也稍微放大 */
+.btn-header-icon svg {
+    width: 24px !important;
+    height: 24px !important;
+    stroke-width: 2.5;
 }
 
 .btn-header-icon:active {
@@ -6759,22 +6767,18 @@ function compressImage(file, maxWidth, quality) {
 
 // [修正] 防止天氣彈窗與全域換頁手勢衝突
 function preventSwipeConflict() {
-    // 定義一個阻擋訊號往上傳的函式
-    const stopPropagation = (e) => { 
-        e.stopPropagation(); 
-        // 不需要 preventDefault，因為我們仍需要內部的捲動功能
-    };
+    const stopPropagation = (e) => { e.stopPropagation(); };
 
-    // 1. 針對「橫向」捲動的小時預報
-    const hourlyScroll = document.getElementById('wd-hourly-list');
-    if (hourlyScroll) {
+    // 1. 鎖定「天氣詳細視窗」的整體 (包含半透明背景 與 白色內容框)
+    // 這樣手指碰到背景也不會觸發翻頁
+    const weatherModal = document.getElementById('weather-detail-modal');
+    if (weatherModal) {
         ['touchstart', 'touchmove', 'touchend', 'wheel'].forEach(evt => {
-            hourlyScroll.addEventListener(evt, stopPropagation, { passive: true });
+            weatherModal.addEventListener(evt, stopPropagation, { passive: true });
         });
     }
 
-    // 2. [強化] 針對所有帶有 scrollable-modal-content 的容器 (天氣詳細視窗)
-    // 這樣可以確保手指只要在這個白色方塊內滑動，絕對不會觸發底層翻頁
+    // 2. 針對其他可能的彈出視窗內容 (保留原本邏輯作為保險)
     const scrollableModals = document.querySelectorAll('.scrollable-modal-content');
     scrollableModals.forEach(modal => {
         ['touchstart', 'touchmove', 'touchend', 'wheel'].forEach(evt => {
@@ -7611,15 +7615,19 @@ async function fetchAndShowDetail(lat, lon, locName) {
         const res = await fetch(url);
         const data = await res.json();
         
-        // --- 0. 處理時間索引 (找到目前這小時的資料) ---
-        const currentHour = new Date().getHours();
-        let startIdx = 0;
-        const dataDate = data.hourly.time[0].split('T')[0];
-        const todayDate = new Date().toISOString().split('T')[0];
+        // [修正] 改用精準的時間字串比對，解決時區不同導致預報消失的問題
+        const now = new Date();
+        const currentHourStr = now.getFullYear() + '-' + 
+            String(now.getMonth()+1).padStart(2, '0') + '-' + 
+            String(now.getDate()).padStart(2, '0') + 'T' + 
+            String(now.getHours()).padStart(2, '0') + ':00';
         
-        // 如果 API 回傳的第一天是今天，就從目前小時開始抓
-        if (dataDate === todayDate) {
-            startIdx = currentHour;
+        // 直接在 API 回傳的時間陣列中尋找「現在這個小時」
+        let startIdx = data.hourly.time.indexOf(currentHourStr);
+        
+        // 如果找不到 (可能跨日了或資料延遲)，預設從第 0 筆開始顯示，確保一定有資料
+        if (startIdx === -1) {
+            startIdx = 0; 
         }
 
         // --- 1. 更新上方儀表板 (Dashboard) ---
