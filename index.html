@@ -6611,23 +6611,31 @@ function compressImage(file, maxWidth, quality) {
 // --- 👇 請在此處插入修正衝突的程式碼 👇 ---
 
 // [修正] 防止天氣橫向捲動區與全域換頁手勢衝突
+// [修正] 防止天氣橫向捲動區與全域換頁手勢衝突
 function preventSwipeConflict() {
-    const scrollContainer = document.getElementById('wd-hourly-list');
-    
-    // 如果找不到元素(例如尚未點開過)則不執行，但在 window load 時通常元素已存在
-    if (!scrollContainer) return;
-
     // 定義阻擋冒泡的函式
     const stopPropagation = (e) => {
         // 關鍵：告訴瀏覽器「事件到此為止」，不要往上傳給翻頁引擎
         e.stopPropagation(); 
     };
 
-    // 在該區塊的所有觸控與滑鼠滾輪階段都阻擋冒泡
-    scrollContainer.addEventListener('touchstart', stopPropagation, { passive: true });
-    scrollContainer.addEventListener('touchmove', stopPropagation, { passive: true });
-    scrollContainer.addEventListener('touchend', stopPropagation, { passive: true });
-    scrollContainer.addEventListener('wheel', stopPropagation, { passive: true });
+    // 1. 橫向捲動區 (小時預報)
+    const hourlyScroll = document.getElementById('wd-hourly-list');
+    if (hourlyScroll) {
+        hourlyScroll.addEventListener('touchstart', stopPropagation, { passive: true });
+        hourlyScroll.addEventListener('touchmove', stopPropagation, { passive: true });
+        hourlyScroll.addEventListener('touchend', stopPropagation, { passive: true });
+        hourlyScroll.addEventListener('wheel', stopPropagation, { passive: true });
+    }
+
+    // 2. [新增] 天氣預報視窗的垂直捲動容器 (避免滑到底層)
+    const weatherModalBox = document.querySelector('#weather-detail-modal .modal-box');
+    if (weatherModalBox) {
+        weatherModalBox.addEventListener('touchstart', stopPropagation, { passive: true });
+        weatherModalBox.addEventListener('touchmove', stopPropagation, { passive: true });
+        weatherModalBox.addEventListener('touchend', stopPropagation, { passive: true });
+        weatherModalBox.addEventListener('wheel', stopPropagation, { passive: true });
+    }
 }
 
 // 確保頁面載入完成後執行綁定
