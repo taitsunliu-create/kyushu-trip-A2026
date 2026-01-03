@@ -5288,15 +5288,24 @@ function getSmartAdviceText(temp, weatherCode) {
         }
 
 
-        // 點擊背景關閉視窗 (修改版)
+        // [修改] 點擊背景關閉視窗 (支援：筆記、位置、計算機、詳細天氣)
         window.onclick = function(event) {
-            const nModal = document.getElementById('note-modal');
-            const lModal = document.getElementById('location-modal');
-            const cModal = document.getElementById('calc-modal'); // [新增]
+            const nModal = document.getElementById('note-modal');         // 筆記
+            const lModal = document.getElementById('location-modal');     // 手動定位
+            const cModal = document.getElementById('calc-modal');         // 計算機
+            const wModal = document.getElementById('weather-detail-modal'); // [新增] 天氣詳情
+            const pModal = document.getElementById('img-preview-modal');  // [新增] 圖片預覽
             
+            // 只有當點擊的目標等於遮罩層 (Overlay) 本身時才關閉，點擊內容區塊不會關閉
             if (event.target == nModal) nModal.style.display = "none";
             if (event.target == lModal) lModal.style.display = "none";
-            if (event.target == cModal) cModal.style.display = "none"; // [新增]
+            if (event.target == cModal) cModal.style.display = "none";
+            if (event.target == wModal) wModal.style.display = "none"; // 關閉天氣詳情
+            if (event.target == pModal) {
+                // 圖片預覽比較特殊，關閉時要順便清除暫存，這裡呼叫對應的取消函式較安全
+                if(typeof cancelImagePreview === 'function') cancelImagePreview();
+                else pModal.style.display = "none";
+            }
         }
         
 // [修改] 兩段式分享功能 (解決瀏覽器阻擋視窗問題)
