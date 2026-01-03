@@ -1618,11 +1618,14 @@
 }
 
 /* 統一定義重整與關閉按鈕的大小與外觀 */
+/* 統一定義重整與關閉按鈕的大小與外觀 */
 .btn-header-icon {
     width: 36px;
     height: 36px;
-    border-radius: 50%; /* 圓形 */
-    background-color: #F3F4F6; /* 淺灰底色，讓點擊範圍更明確 */
+    border-radius: 50%;
+    
+    background-color: transparent; /* [修改] 去除背景色，變為透明 */
+    
     border: none;
     color: #4B5563;
     display: flex;
@@ -1636,15 +1639,20 @@
     margin: 0 !important;
 }
 
+/* [新增] 滑鼠移入時才顯示淡淡的背景，增加互動感 */
+.btn-header-icon:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
 .btn-header-icon:active {
-    background-color: #E5E7EB;
+    background-color: rgba(0, 0, 0, 0.1);
     transform: scale(0.92);
 }
 
 .btn-header-icon svg {
-    width: 20px;
-    height: 20px;
-    stroke-width: 2.5;
+    width: 24px;  /* [微調] 因為去除了背景，圖示稍微加大一點點視覺更平衡 */
+    height: 24px;
+    stroke-width: 2; /* 線條稍微細一點點，符合簡約風格 */
 }
 /* --- [修改] Modal 頭部按鈕群組樣式 (對齊與防衝突) --- */
 .modal-header-actions {
