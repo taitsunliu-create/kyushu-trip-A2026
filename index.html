@@ -971,9 +971,15 @@
             cursor: pointer; /* [新增] 這行是關鍵！讓手機知道背景可點擊 */
         }
         .modal-box {
-            background: white; width: 90%; max-width: 320px;
+            /* [修改] 改為偏白毛玻璃質感 */
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px); /* 支援 iOS Safari */
+            border: 1px solid rgba(255, 255, 255, 0.6); /* 玻璃邊緣反光感 */
+            
+            width: 90%; max-width: 320px;
             border-radius: 16px; padding: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15); /* 加深陰影增加層次 */
             text-align: center;
             transform: scale(0.95);
             animation: popIn 0.2s forwards;
