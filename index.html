@@ -413,6 +413,26 @@
             user-select: none;
         }
         .float-share-btn:active { transform: scale(0.95); }
+        /* --- 請在此處插入代碼 Start --- */
+        .share-cancel-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px; height: 24px;
+            background: #9CA3AF; color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            z-index: 20;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        .share-cancel-badge:active { transform: scale(0.9); background: #6B7280; }
+        /* --- 請在此處插入代碼 End --- */
+        .float-share-btn svg { width: 20px; height: 20px; stroke-width: 2.5; }
         .float-share-btn svg { width: 20px; height: 20px; stroke-width: 2.5; }
         
 .header-title-area .badge-trip::before {
@@ -5493,17 +5513,22 @@ function getSmartAdviceText(temp, weatherCode) {
                     await navigator.share(window.pendingShareData);
                     resetShareButton(btn);
                 } catch (err) {
-                    // 被阻擋時，切換為手動發送按鈕
+                   // 被阻擋時，切換為手動發送按鈕
                     console.log("自動分享未觸發，切換為手動模式");
                     btn.style.pointerEvents = "auto";
+                    
+                    /* --- [修改] 加入右上角取消按鈕 (X) --- */
                     btn.innerHTML = `
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px; animation: popIn 0.3s;">
                             <line x1="22" y1="2" x2="11" y2="13"></line>
                             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                         </svg>
                         點擊發送
+                        <div class="share-cancel-badge" onclick="event.stopPropagation(); resetShareButton(this.parentElement);">✕</div>
                     `;
-                    btn.style.background = "#10B981"; 
+                    /* --- [修改結束] --- */
+
+                    btn.style.background = "#10B981";
                     btn.style.borderColor = "#10B981";
                     btn.style.color = "white";
                     btn.style.opacity = "1";
