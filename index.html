@@ -7628,15 +7628,34 @@ async function fetchAndShowDetail(lat, lon, locName) {
         const res = await fetch(url);
         const data = await res.json();
         
-        // --- 0. 處理時間索引 (找到目前這小時的資料) ---
-        const currentHour = new Date().getHours();
+        // --- 0. 處理時間索引 (API 智慧對齊版 - 最終修正) ---
         let startIdx = 0;
-        const dataDate = data.hourly.time[0].split('T')[0];
-        const todayDate = new Date().toISOString().split('T')[0];
-        
-        // 如果 API 回傳的第一天是今天，就從目前小時開始抓
-        if (dataDate === todayDate) {
-            startIdx = currentHour;
+
+        // 【核心邏輯】直接讀取 API 回傳的「該地點目前時間」，不依賴手機時區
+        // data.current_weather.time 格式為 "YYYY-MM-DDTHH:00"
+        const apiCurrentTime = data.current_weather.time; 
+
+        // 在 hourly.time 陣列中，尋找跟這個時間一模一樣的資料在哪個位置
+        const foundIndex = data.hourly.time.indexOf(apiCurrentTime);
+
+        if (foundIndex !== -1) {
+            // 找到了！這就是最準確的當地目前時間索引
+            startIdx = foundIndex;
+        } else {
+            // (備案) 萬一 API 資料格式異常找不到，才退回使用手機本地時間判斷
+            const now = new Date();
+            const currentHour = now.getHours();
+            
+            // 修正：使用本地時間取得日期，避免 UTC 導致的跨日誤差
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const localDateStr = `${year}-${month}-${day}`;
+            const dataDate = data.hourly.time[0].split('T')[0];
+            
+            if (dataDate === localDateStr) {
+                startIdx = currentHour;
+            }
         }
 
         // --- 1. 更新上方儀表板 (Dashboard) ---
