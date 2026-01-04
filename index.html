@@ -7628,16 +7628,21 @@ async function fetchAndShowDetail(lat, lon, locName) {
         const res = await fetch(url);
         const data = await res.json();
         
-        // --- 0. 處理時間索引 (找到目前這小時的資料) ---
-        const currentHour = new Date().getHours();
-        let startIdx = 0;
-        const dataDate = data.hourly.time[0].split('T')[0];
-        const todayDate = new Date().toISOString().split('T')[0];
+        // --- 0. 處理時間索引 (修正：使用當地的 current_weather 時間) ---
+        // Open-Meteo 的 current_weather.time 回傳的是當地的 ISO 時間 (例如 "2026-01-27T11:00")
+        const localTimeStr = data.current_weather.time;
         
-        // 如果 API 回傳的第一天是今天，就從目前小時開始抓
-        if (dataDate === todayDate) {
-            startIdx = currentHour;
+        // 直接在 hourly 列表中尋找這個時間字串，就能精準對應到當地的「現在」
+        let startIdx = data.hourly.time.indexOf(localTimeStr);
+        
+        // 防呆：如果剛好沒對到 (極少見)，則預設從 0 開始
+        if (startIdx === -1) {
+            // 嘗試只比對 "YYYY-MM-DDTHH" (前13碼)，忽略分鐘差異
+            const hourStr = localTimeStr.substring(0, 13);
+            startIdx = data.hourly.time.findIndex(t => t.startsWith(hourStr));
         }
+        
+        if (startIdx === -1) startIdx = 0;
 
         // --- 1. 更新上方儀表板 (Dashboard) ---
         // 使用目前這小時的詳細數據
