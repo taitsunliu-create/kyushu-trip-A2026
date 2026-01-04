@@ -1856,26 +1856,27 @@
             font-weight: 700;
             color: #333; /* [修改] 數值顏色改為 #333 (與日出「時間」顏色一致) */
         }
-        /* [修改] 詳細天氣資訊卡 (左右分欄佈局) */
+        /* [修改] 詳細天氣資訊卡 (優化配色與水平佈局) */
         .astro-box {
             display: grid;
-            grid-template-columns: 100px 1fr; /* 左側固定寬度，右側填滿 */
-            gap: 15px;
-            background: #F8FAFC; /* 極淡的冷灰色，比純白柔和，比透明清楚 */
-            padding: 15px;
-            border-radius: 16px;
+            grid-template-columns: auto 1fr; /* 左側自動寬度，右側填滿 */
+            gap: 20px;
+            /* [修改] 背景改為半透明白，移除深色邊框，讓視覺更柔和 */
+            background: rgba(255, 255, 255, 0.5); 
+            padding: 15px 20px;
+            border-radius: 20px; /* 更圓潤 */
             margin-bottom: 20px;
-            border: 1px solid #E2E8F0; /* 增加極淡邊框提升質感 */
+            border: none; /* 移除邊框 */
             align-items: center;
         }
 
-        /* 左側：日出日落區 */
+        /* 左側：日出日落區 (改為水平排列) */
         .astro-left-col {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-            border-right: 1px dashed #CBD5E1; /* 中間的分隔線 */
-            padding-right: 15px;
+            flex-direction: row; /* [修改] 水平排列 */
+            gap: 25px;           /* 增加間距 */
+            border-right: 1px dashed #CBD5E1; 
+            padding-right: 25px;
             align-items: center;
         }
 
@@ -1883,39 +1884,31 @@
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            gap: 2px; 
+            gap: 5px; 
         }
 
-        /* [修改] 圖示放大，顏色調整 */
+        /* 圖示設定 */
         .astro-icon svg {
-            width: 32px;  /* [放大] 原本 24px -> 32px */
-            height: 32px;
+            width: 36px;  /* 稍微再大一點點 */
+            height: 36px;
             fill: none;
-            stroke-width: 2;
+            stroke-width: 2.5; /* 線條加粗一點，解決變形感 */
             stroke-linecap: round;
             stroke-linejoin: round;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.05));
         }
 
-        /* 日出專用色：暖橘 */
         .icon-sunrise { stroke: #F59E0B; }
-        /* 日落專用色：暮光紫藍 (比較舒服且對比清楚) */
         .icon-sunset { stroke: #6366F1; }
 
-        .astro-label { 
-            font-size: 0.7rem; 
-            color: #94A3B8; /* 淺灰 */
-            letter-spacing: 1px;
-        } 
-        
         .astro-time { 
-            font-size: 0.85rem; /* [縮小] 讓視覺集中在圖示 */
-            font-weight: 600; 
-            color: #475569; /* 深灰 */
-            font-family: monospace; /* 數字等寬比較好看 */
+            font-size: 0.9rem; 
+            font-weight: 700; 
+            color: #334155; 
+            font-family: monospace;
         }
 
-        /* 右側：建議與溫差區 */
+        /* 右側：維持不變 */
         .astro-right-col {
             display: flex;
             flex-direction: column;
@@ -4405,6 +4398,8 @@ header.is-night {
                         <svg class="icon-sunrise" viewBox="0 0 24 24">
                             <path d="M17 18a5 5 0 0 0-10 0"></path>
                             <line x1="12" y1="2" x2="12" y2="9"></line>
+                            <polyline points="8 6 12 2 16 6"></polyline> 
+                            
                             <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line>
                             <line x1="1" y1="18" x2="3" y2="18"></line>
                             <line x1="21" y1="18" x2="23" y2="18"></line>
@@ -4415,17 +4410,19 @@ header.is-night {
                     </div>
                     <span class="astro-time" id="wd-sunrise">--:--</span>
                 </div>
+                
                 <div class="astro-item">
                     <div class="astro-icon">
                         <svg class="icon-sunset" viewBox="0 0 24 24">
                             <path d="M17 18a5 5 0 0 0-10 0"></path>
                             <line x1="12" y1="9" x2="12" y2="2"></line>
+                            <path d="M8 5 L12 9 L16 5"></path>
+                            
                             <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line>
                             <line x1="1" y1="18" x2="3" y2="18"></line>
                             <line x1="21" y1="18" x2="23" y2="18"></line>
                             <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line>
                             <line x1="23" y1="22" x2="1" y2="22"></line>
-                            <polyline points="12 9 9 6 15 6"></polyline>
                         </svg>
                     </div>
                     <span class="astro-time" id="wd-sunset">--:--</span>
@@ -7752,10 +7749,10 @@ async function fetchAndShowDetail(lat, lon, locName) {
                 diffBadge.style.display = 'none'; 
             } else if (diff > 0) {
                 diffBadge.className = 'diff-badge diff-hot';
-                diffBadge.innerHTML = `🔥 比這裡熱 ${diff.toFixed(1)}°C`;
+                diffBadge.innerHTML = `氣溫比目前高 ${diff.toFixed(1)}°C`;
             } else {
                 diffBadge.className = 'diff-badge diff-cold';
-                diffBadge.innerHTML = `❄️ 比這裡冷 ${Math.abs(diff).toFixed(1)}°C`;
+                diffBadge.innerHTML = `氣溫比目前低 ${Math.abs(diff).toFixed(1)}°C`;
             }
         } else {
             diffBadge.style.display = 'none'; // 無定位資料時隱藏
@@ -7765,7 +7762,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
         // getSmartAdviceText(溫度, 天氣代碼) 是您程式碼中已經存在的函式
         const smartAdvice = getSmartAdviceText(curTemp, curCode);
         document.getElementById('wd-advice-text').innerText = smartAdvice;
-        
+
         // --- 3. 渲染 24小時預報 (維持不變) ---
         const hourlyContainer = document.getElementById('wd-hourly-list');
         hourlyContainer.innerHTML = '';
