@@ -7628,34 +7628,39 @@ async function fetchAndShowDetail(lat, lon, locName) {
         const res = await fetch(url);
         const data = await res.json();
         
-        // --- 0. 處理時間索引 (API 智慧對齊版 - 最終修正) ---
+        // --- 0. 處理時間索引 (絕對精準時區運算版) ---
         let startIdx = 0;
 
-        // 【核心邏輯】直接讀取 API 回傳的「該地點目前時間」，不依賴手機時區
-        // data.current_weather.time 格式為 "YYYY-MM-DDTHH:00"
-        const apiCurrentTime = data.current_weather.time; 
+        try {
+            // 步驟 A: 取得 API 提供的「秒數」偏移量 (例如日本是 +32400 秒)
+            const offsetSeconds = data.utc_offset_seconds;
 
-        // 在 hourly.time 陣列中，尋找跟這個時間一模一樣的資料在哪個位置
-        const foundIndex = data.hourly.time.indexOf(apiCurrentTime);
-
-        if (foundIndex !== -1) {
-            // 找到了！這就是最準確的當地目前時間索引
-            startIdx = foundIndex;
-        } else {
-            // (備案) 萬一 API 資料格式異常找不到，才退回使用手機本地時間判斷
+            // 步驟 B: 計算「目的地」的當地時間
+            // 1. 取得當前 UTC 時間 (毫秒)
             const now = new Date();
-            const currentHour = now.getHours();
+            const utcNow = now.getTime() + (now.getTimezoneOffset() * 60000);
             
-            // 修正：使用本地時間取得日期，避免 UTC 導致的跨日誤差
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const localDateStr = `${year}-${month}-${day}`;
-            const dataDate = data.hourly.time[0].split('T')[0];
-            
-            if (dataDate === localDateStr) {
-                startIdx = currentHour;
+            // 2. 加上目的地的偏移量 -> 得到目的地的準確時間物件
+            const targetTime = new Date(utcNow + (offsetSeconds * 1000));
+
+            // 步驟 C: 將目標時間轉為 ISO 格式字串 (格式: YYYY-MM-DDTHH)
+            // 原理：toISOString() 會回傳 UTC 格式，但我們已經把時間「灌水」成當地時間了
+            // 所以直接截取前 13 位 (到小時)，再加上 ":00" 即可完美對齊 API 資料
+            const targetTimeStr = targetTime.toISOString().slice(0, 13) + ":00"; 
+
+            // 步驟 D: 在 API 陣列中搜尋這個時間字串
+            const foundIndex = data.hourly.time.indexOf(targetTimeStr);
+
+            if (foundIndex !== -1) {
+                startIdx = foundIndex;
+            } else {
+                // 如果真的找不到字串，退而求其次使用我們算出來的「當地小時」
+                // getUTCHours() 這裡取出來的就是當地的小時 (因為我們上面灌過水了)
+                startIdx = targetTime.getUTCHours();
             }
+        } catch (e) {
+            console.error("時區計算錯誤，降級使用手機時間", e);
+            startIdx = new Date().getHours();
         }
 
         // --- 1. 更新上方儀表板 (Dashboard) ---
