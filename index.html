@@ -1856,35 +1856,95 @@
             font-weight: 700;
             color: #333; /* [修改] 數值顏色改為 #333 (與日出「時間」顏色一致) */
         }
-        /* [修改] 日出日落區塊 - 去除突兀邊框，改為極簡風格 */
+        /* [修改] 詳細天氣資訊卡 (左右分欄佈局) */
         .astro-box {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            /* 移除原本的漸層與橘色邊框，改用極淡的背景融入 */
-            background: rgba(0, 0, 0, 0.03); 
-            padding: 8px 0; /* [維持縮小] 高度縮小：原本 15px -> 8px */
+            display: grid;
+            grid-template-columns: 100px 1fr; /* 左側固定寬度，右側填滿 */
+            gap: 15px;
+            background: #F8FAFC; /* 極淡的冷灰色，比純白柔和，比透明清楚 */
+            padding: 15px;
             border-radius: 16px;
             margin-bottom: 20px;
-            border: none; /* 移除邊框 */
+            border: 1px solid #E2E8F0; /* 增加極淡邊框提升質感 */
+            align-items: center;
         }
-        /* [修改] 日出日落區塊佈局 */
-        .astro-item { display: flex; flex-direction: column; align-items: center; gap: 1px; }
 
-        /* [新增] 日出日落 SVG 圖示樣式 */
+        /* 左側：日出日落區 */
+        .astro-left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border-right: 1px dashed #CBD5E1; /* 中間的分隔線 */
+            padding-right: 15px;
+            align-items: center;
+        }
+
+        .astro-item { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 2px; 
+        }
+
+        /* [修改] 圖示放大，顏色調整 */
         .astro-icon svg {
-            width: 24px; /* [維持縮小] 圖示縮小：原本 32px -> 24px */
-            height: 24px;
-            stroke: #F59E0B; /* 太陽暖橘色 (僅圖示保留顏色) */
+            width: 32px;  /* [放大] 原本 24px -> 32px */
+            height: 32px;
             fill: none;
-            stroke-width: 1.5; /* 線條細緻一點，仿 iOS 風格 */
+            stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;
-            margin-bottom: 2px;
-            filter: drop-shadow(0 2px 3px rgba(245, 158, 11, 0.2)); /* 淡淡的光暈 */
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
         }
-        .astro-label { font-size: 0.7rem; color: #666; } /* [維持縮小] 字體縮小，顏色維持 #666 */
-        .astro-time { font-size: 0.95rem; font-weight: 700; color: #333; } /* [維持縮小] 字體縮小 */
+
+        /* 日出專用色：暖橘 */
+        .icon-sunrise { stroke: #F59E0B; }
+        /* 日落專用色：暮光紫藍 (比較舒服且對比清楚) */
+        .icon-sunset { stroke: #6366F1; }
+
+        .astro-label { 
+            font-size: 0.7rem; 
+            color: #94A3B8; /* 淺灰 */
+            letter-spacing: 1px;
+        } 
+        
+        .astro-time { 
+            font-size: 0.85rem; /* [縮小] 讓視覺集中在圖示 */
+            font-weight: 600; 
+            color: #475569; /* 深灰 */
+            font-family: monospace; /* 數字等寬比較好看 */
+        }
+
+        /* 右側：建議與溫差區 */
+        .astro-right-col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        /* 溫差標籤 */
+        .diff-badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            width: fit-content;
+        }
+        .diff-hot { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+        .diff-cold { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; }
+        .diff-same { background: #F3F4F6; color: #64748B; border: 1px solid #E2E8F0; }
+
+        /* 穿衣建議文字 */
+        .advice-text-small {
+            font-size: 0.85rem;
+            color: #334155;
+            line-height: 1.5;
+            text-align: left;
+        }
+
 /* --- [新增] iOS 天氣動態特效 (仿 iPhone 天氣) --- */
 /* 1. Header 容器設定 */
 .weather-bg-layer {
@@ -4339,48 +4399,46 @@ header.is-night {
             </div>
         </div>
         <div class="astro-box">
-            <div class="astro-item">
-                <div class="astro-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <g stroke="#CBD5E1">
-                            <line x1="2" y1="20" x2="22" y2="20" stroke-width="2.5"></line> <line x1="12" y1="7" x2="12" y2="2"></line>
-                            <polyline points="9 5 12 2 15 5"></polyline>
-                        </g>
-                        <g stroke="#F59E0B">
-                            <path d="M7 20 A 5 5 0 0 1 17 20"></path> 
-                            <line x1="12" y1="12" x2="12" y2="9"></line> 
-                            <line x1="6.3" y1="14.3" x2="4.2" y2="12.2"></line>
-                            <line x1="17.7" y1="14.3" x2="19.8" y2="12.2"></line>
-                            <line x1="4" y1="20" x2="1" y2="20"></line>
-                            <line x1="20" y1="20" x2="23" y2="20"></line>
-                        </g>
-                    </svg>
+            <div class="astro-left-col">
+                <div class="astro-item">
+                    <div class="astro-icon">
+                        <svg class="icon-sunrise" viewBox="0 0 24 24">
+                            <path d="M17 18a5 5 0 0 0-10 0"></path>
+                            <line x1="12" y1="2" x2="12" y2="9"></line>
+                            <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line>
+                            <line x1="1" y1="18" x2="3" y2="18"></line>
+                            <line x1="21" y1="18" x2="23" y2="18"></line>
+                            <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line>
+                            <line x1="23" y1="22" x2="1" y2="22"></line>
+                            <polyline points="8 6 12 2 16 6"></polyline>
+                        </svg>
+                    </div>
+                    <span class="astro-time" id="wd-sunrise">--:--</span>
                 </div>
-                <span class="astro-label">日出</span>
-                <span class="astro-time" id="wd-sunrise">--:--</span>
+                <div class="astro-item">
+                    <div class="astro-icon">
+                        <svg class="icon-sunset" viewBox="0 0 24 24">
+                            <path d="M17 18a5 5 0 0 0-10 0"></path>
+                            <line x1="12" y1="9" x2="12" y2="2"></line>
+                            <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line>
+                            <line x1="1" y1="18" x2="3" y2="18"></line>
+                            <line x1="21" y1="18" x2="23" y2="18"></line>
+                            <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line>
+                            <line x1="23" y1="22" x2="1" y2="22"></line>
+                            <polyline points="12 9 9 6 15 6"></polyline>
+                        </svg>
+                    </div>
+                    <span class="astro-time" id="wd-sunset">--:--</span>
+                </div>
             </div>
-            
-            <div style="width: 1px; height: 40px; background: #CBD5E1; opacity: 0.5;"></div>
 
-            <div class="astro-item">
-                <div class="astro-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                         <g stroke="#CBD5E1">
-                            <line x1="2" y1="20" x2="22" y2="20" stroke-width="2.5"></line> <line x1="12" y1="2" x2="12" y2="7"></line>
-                            <polyline points="9 4 12 7 15 4"></polyline>
-                        </g>
-                        <g stroke="#F59E0B">
-                            <path d="M7 20 A 5 5 0 0 1 17 20"></path>
-                            <line x1="12" y1="12" x2="12" y2="9"></line>
-                            <line x1="6.3" y1="14.3" x2="4.2" y2="12.2"></line>
-                            <line x1="17.7" y1="14.3" x2="19.8" y2="12.2"></line>
-                            <line x1="4" y1="20" x2="1" y2="20"></line>
-                            <line x1="20" y1="20" x2="23" y2="20"></line>
-                        </g>
-                    </svg>
+            <div class="astro-right-col">
+                <div id="wd-diff-badge" class="diff-badge diff-same" style="display:none;">
+                    計算中...
                 </div>
-                <span class="astro-label">日落</span>
-                <span class="astro-time" id="wd-sunset">--:--</span>
+                <div id="wd-advice-text" class="advice-text-small">
+                    正在分析當地穿著建議...
+                </div>
             </div>
         </div>
 
@@ -7680,7 +7738,34 @@ async function fetchAndShowDetail(lat, lon, locName) {
 
         document.getElementById('wd-sunrise').innerText = sunriseStr;
         document.getElementById('wd-sunset').innerText = sunsetStr;
+// --- [新增] 2.5 更新右側：溫差比對與穿衣建議 ---
+        
+        // A. 溫差比對
+        const diffBadge = document.getElementById('wd-diff-badge');
+        // currentMyTemp 是全域變數，若有定位成功會有數值
+        if (typeof currentMyTemp !== 'undefined' && currentMyTemp !== null) {
+            const diff = curTemp - currentMyTemp;
+            diffBadge.style.display = 'inline-flex';
+            
+            if (Math.abs(diff) < 2) {
+                // 溫差小於 2 度，不顯示差異，或顯示差不多
+                diffBadge.style.display = 'none'; 
+            } else if (diff > 0) {
+                diffBadge.className = 'diff-badge diff-hot';
+                diffBadge.innerHTML = `🔥 比這裡熱 ${diff.toFixed(1)}°C`;
+            } else {
+                diffBadge.className = 'diff-badge diff-cold';
+                diffBadge.innerHTML = `❄️ 比這裡冷 ${Math.abs(diff).toFixed(1)}°C`;
+            }
+        } else {
+            diffBadge.style.display = 'none'; // 無定位資料時隱藏
+        }
 
+        // B. 穿衣建議 (重複利用您既有的智慧建議函式)
+        // getSmartAdviceText(溫度, 天氣代碼) 是您程式碼中已經存在的函式
+        const smartAdvice = getSmartAdviceText(curTemp, curCode);
+        document.getElementById('wd-advice-text').innerText = smartAdvice;
+        
         // --- 3. 渲染 24小時預報 (維持不變) ---
         const hourlyContainer = document.getElementById('wd-hourly-list');
         hourlyContainer.innerHTML = '';
