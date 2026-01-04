@@ -1857,16 +1857,17 @@
             color: #333; /* [修改] 數值顏色改為 #333 (與日出「時間」顏色一致) */
         }
         /* [修改] 詳細天氣資訊卡 (優化配色與水平佈局) */
+        /* [修改] 詳細天氣資訊卡 (優化配色與水平佈局) */
         .astro-box {
             display: grid;
-            grid-template-columns: auto 1fr; /* 左側自動寬度，右側填滿 */
+            grid-template-columns: auto 1fr;
             gap: 20px;
-            /* [修改] 背景改為半透明白，移除深色邊框，讓視覺更柔和 */
-            background: rgba(255, 255, 255, 0.5); 
+            /* [修改] 背景改為極淡灰色 (與上方體感資訊欄一致)，移除偏白的突兀感 */
+            background: rgba(0, 0, 0, 0.03); 
             padding: 15px 20px;
-            border-radius: 20px; /* 更圓潤 */
+            border-radius: 20px;
             margin-bottom: 20px;
-            border: none; /* 移除邊框 */
+            border: none;
             align-items: center;
         }
 
@@ -1916,19 +1917,34 @@
             justify-content: center;
         }
 
-        /* 溫差標籤 */
+        /* [修改] 溫差標籤 - 透明背景、縮小字體、不換行 */
         .diff-badge {
             display: inline-flex;
             align-items: center;
-            font-size: 0.8rem;
+            font-size: 0.75rem;  /* [修改] 字體縮小 (原 0.8rem) */
             font-weight: 700;
-            padding: 4px 10px;
+            padding: 2px 8px;    /* [修改] 內距縮小，讓標籤更精緻 */
             border-radius: 20px;
             width: fit-content;
+            white-space: nowrap; /* [新增] 強制文字不換行 */
         }
-        .diff-hot { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
-        .diff-cold { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; }
-        .diff-same { background: #F3F4F6; color: #64748B; border: 1px solid #E2E8F0; }
+        
+        /* [修改] 背景改為 transparent (透明)，只保留有顏色的邊框 */
+        .diff-hot { 
+            background: transparent; 
+            color: #DC2626; 
+            border: 1px solid #FECACA; 
+        }
+        .diff-cold { 
+            background: transparent; 
+            color: #2563EB; 
+            border: 1px solid #BFDBFE; /* 保留您想要的藍色邊框 */
+        }
+        .diff-same { 
+            background: transparent; 
+            color: #64748B; 
+            border: 1px solid #E2E8F0; 
+        }
 
         /* 穿衣建議文字 */
         .advice-text-small {
