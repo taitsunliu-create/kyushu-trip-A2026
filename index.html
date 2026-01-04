@@ -4689,6 +4689,11 @@ async function updateWeatherWidget(dayId) {
 }
 // ★★★ [新增函式] 當行程摺頁全關閉時，還原回「我的位置」天氣與特效
 function resetHeaderToLocal() {
+    /* --- 請在此處插入代碼 Start --- */
+    // [修正] 強制清空目前選中的行程設定，讓 Modal 知道現在是「我的位置」模式
+    window.currentActiveConfig = null;
+    /* --- 請在此處插入代碼 End --- */
+
     // 1. 檢查是否有快取的定位資料
     if (!window.appCache || !window.appCache['my_location_combined']) {
         return; // 還沒定位過就不動作
