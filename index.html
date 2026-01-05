@@ -48,32 +48,32 @@
 
         /* Header - Modified for Side-by-Side Layout */
         /* [新增] 右上角重新整理按鈕樣式 */
-        /* [修改] 重整按鈕：縮小並跟隨文字 */
         .btn-app-refresh {
-            position: relative; /* 改為相對定位，跟隨文字流 */
-            display: inline-flex; /* 讓它像文字一樣排列 */
-            vertical-align: middle; /* 垂直置中對齊文字 */
+            position: absolute;
+            top: -5px;   /* 距離頂部 */
+            right: -5px; /* 距離右側 */
             background: transparent;
             border: none;
-            color: rgba(255, 255, 255, 0.6);
-            padding: 2px; /* 縮小點擊範圍的留白 */
-            margin-left: 2px; /* 與標題文字保持一點距離 */
-            margin-bottom: 4px; /* 微調垂直位置 */
+            color: rgba(255, 255, 255, 0.5); /* 預設半透明白 */
+            padding: 10px; /* 增加點擊範圍 */
             cursor: pointer;
+            z-index: 50; /* 確保在最上層可點擊 */
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             -webkit-tap-highlight-color: transparent;
         }
         .btn-app-refresh:active, .btn-app-refresh:hover {
-            color: white;
-            transform: rotate(180deg);
-            background: rgba(255, 255, 255, 0.1);
+            color: white; /* 點擊時變全白 */
+            transform: rotate(180deg); /* 點擊時旋轉特效 */
+            background: rgba(255, 255, 255, 0.1); /* 微微的背景回饋 */
             border-radius: 50%;
         }
-        /* [修改] 圖示縮小約 60% (原 20px -> 12px) */
         .btn-app-refresh svg {
-            width: 12px;
-            height: 12px;
-            stroke-width: 3; /* 因為變小了，線條加粗一點點才清楚 */
+            width: 20px;
+            height: 20px;
+            stroke-width: 2.5;
         }
 
         header {
@@ -2357,19 +2357,18 @@ header.is-night {
     <div id="weather-effect-layer" class="weather-bg-layer"></div>
 
     <div class="header-content">
-        
+        <button class="btn-app-refresh" onclick="window.location.reload()" title="重新整理 App">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 4v6h-6"></path>
+                <path d="M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+        </button>
+
         <div class="header-title-area">
-            <div class="header-title-area">
-                <h1>九州親子自駕遊
-                    <button class="btn-app-refresh" onclick="window.location.reload()" title="重新整理">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M23 4v6h-6"></path>
-                            <path d="M1 20v-6h6"></path>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                        </svg>
-                    </button>
-                    <span class="subtitle">2026.01.25-30</span>
-                </h1>
+            <h1>九州親子自駕遊</h1>
+                <div class="subtitle">2026/01/25 - 01/30 (6天5夜)</div>
+                <div class="badge-trip">親子自由行 • 熊本進福岡出</div>
             </div>
 
             <!-- 天氣資訊盒 (擺放在右側，三欄式設計) -->
