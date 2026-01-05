@@ -47,6 +47,35 @@
         }
 
         /* Header - Modified for Side-by-Side Layout */
+        /* [新增] 右上角重新整理按鈕樣式 */
+        .btn-app-refresh {
+            position: absolute;
+            top: 5px;   /* 距離頂部 */
+            right: 5px; /* 距離右側 */
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.5); /* 預設半透明白 */
+            padding: 10px; /* 增加點擊範圍 */
+            cursor: pointer;
+            z-index: 50; /* 確保在最上層可點擊 */
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-app-refresh:active, .btn-app-refresh:hover {
+            color: white; /* 點擊時變全白 */
+            transform: rotate(180deg); /* 點擊時旋轉特效 */
+            background: rgba(255, 255, 255, 0.1); /* 微微的背景回饋 */
+            border-radius: 50%;
+        }
+        .btn-app-refresh svg {
+            width: 20px;
+            height: 20px;
+            stroke-width: 2.5;
+        }
+
         header {
             background: linear-gradient(135deg, #1e40af, #3b82f6);
             color: var(--white);
@@ -2328,6 +2357,14 @@ header.is-night {
     <div id="weather-effect-layer" class="weather-bg-layer"></div>
 
     <div class="header-content">
+        <button class="btn-app-refresh" onclick="window.location.reload()" title="重新整理 App">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 4v6h-6"></path>
+                <path d="M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+        </button>
+
         <div class="header-title-area">
             <h1>九州親子自駕遊</h1>
                 <div class="subtitle">2026/01/25 - 01/30 (6天5夜)</div>
