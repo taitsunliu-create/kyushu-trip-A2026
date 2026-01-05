@@ -3623,7 +3623,72 @@ header.is-night {
 
     <!-- TAB 4: 旅遊資訊 -->
     <div id="view-info" class="container">
-        
+        <div class="card" style="background: transparent; box-shadow: none; padding: 0; border: none; margin-bottom: 10px;">
+            <div class="card-header" style="background: #fff; border-radius: 16px; padding: 15px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 2px 6px rgba(0,0,0,0.04); margin-bottom: 15px;">
+                <div class="card-title">🍽️ 美食備案口袋名單</div>
+                <div class="tag tag-food">彈性選擇</div>
+            </div>
+
+            <div class="day-wrapper">
+                <div class="day-toggle" id="toggle-food-k" onclick="toggleTimeline('food-k', this)">
+                    <div class="day-info">
+                        <h3>🐻 熊本區備案</h3>
+                        <span>勝烈亭、拉麵、馬肉料理</span>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                </div>
+                <div id="food-k" class="timeline">
+                    <div style="padding: 20px; color: #9CA3AF; text-align: center; border: 2px dashed #E5E7EB; border-radius: 8px; margin-bottom: 15px;">
+                        (此處預留：熊本美食詳細清單)
+                    </div>
+                </div>
+            </div>
+
+            <div class="day-wrapper">
+                <div class="day-toggle" id="toggle-food-a" onclick="toggleTimeline('food-a', this)">
+                    <div class="day-info">
+                        <h3>⛰️ 阿蘇 & 黑川備案</h3>
+                        <span>赤牛丼、地雞、溫泉街甜點</span>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                </div>
+                <div id="food-a" class="timeline">
+                    <div style="padding: 20px; color: #9CA3AF; text-align: center; border: 2px dashed #E5E7EB; border-radius: 8px; margin-bottom: 15px;">
+                        (此處預留：阿蘇與黑川美食詳細清單)
+                    </div>
+                </div>
+            </div>
+
+            <div class="day-wrapper">
+                <div class="day-toggle" id="toggle-food-y" onclick="toggleTimeline('food-y', this)">
+                    <div class="day-info">
+                        <h3>♨️ 別府 & 由布院備案</h3>
+                        <span>地獄蒸、豐後牛釜飯</span>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                </div>
+                <div id="food-y" class="timeline">
+                    <div style="padding: 20px; color: #9CA3AF; text-align: center; border: 2px dashed #E5E7EB; border-radius: 8px; margin-bottom: 15px;">
+                        (此處預留：別府與由布院美食詳細清單)
+                    </div>
+                </div>
+            </div>
+
+            <div class="day-wrapper">
+                <div class="day-toggle" id="toggle-food-f" onclick="toggleTimeline('food-f', this)">
+                    <div class="day-info">
+                        <h3>🍜 福岡區備案</h3>
+                        <span>牛腸鍋、屋台、博多拉麵</span>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                </div>
+                <div id="food-f" class="timeline">
+                    <div style="padding: 20px; color: #9CA3AF; text-align: center; border: 2px dashed #E5E7EB; border-radius: 8px; margin-bottom: 15px;">
+                        (此處預留：福岡美食詳細清單)
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- 熊本 上/下通 攻略 -->
         <div class="card">
             <div class="card-header">
