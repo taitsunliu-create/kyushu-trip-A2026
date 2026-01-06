@@ -8438,7 +8438,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
             hourlyContainer.appendChild(item);
         }
 
-        // --- 4. 渲染未來 7 天預報 (iOS 色條升級版 + 小白點) ---
+        // --- 4. 渲染未來 7 天預報 (iOS 色條升級版 + 小白點 + 版面優化) ---
             const dailyContainer = document.getElementById('wd-daily-list');
             dailyContainer.innerHTML = '';
 
@@ -8449,6 +8449,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
             const globalRange = globalMax - globalMin || 1;
 
             for (let i = 0; i < 7; i++) {
+                // ... (省略重複的變數宣告，保持原樣) ...
                 const dateStr = data.daily.time[i].slice(5).replace('-', '/');
                 const max = Math.round(data.daily.temperature_2m_max[i]);
                 const min = Math.round(data.daily.temperature_2m_min[i]);
@@ -8460,18 +8461,13 @@ async function fetchAndShowDetail(lat, lon, locName) {
                 const dayNames = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
                 const dayName = dayNames[dateObj.getDay()];
 
-                // 計算色條位置
                 const leftPercent = ((min - globalMin) / globalRange) * 100;
                 const widthPercent = ((max - min) / globalRange) * 100;
 
-                // [新增] 小白點邏輯：只在今天 (i === 0) 顯示
                 let dotHtml = '';
                 if (i === 0) {
                     const currentT = data.current_weather.temperature;
-                    // 計算小白點在全域範圍中的位置
                     const dotPercent = ((currentT - globalMin) / globalRange) * 100;
-                    
-                    // 繪製小白點 (白色圓點 + 陰影)
                     dotHtml = `
                         <div style="
                             position: absolute;
@@ -8481,7 +8477,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
                             width: 10px;
                             height: 10px;
                             background: #FFFFFF;
-                            border: 2px solid #374151; /* 深色邊框增加對比 */
+                            border: 2px solid #374151;
                             border-radius: 50%;
                             box-shadow: 0 0 3px rgba(0,0,0,0.3);
                             z-index: 10;
@@ -8492,9 +8488,16 @@ async function fetchAndShowDetail(lat, lon, locName) {
                 const row = document.createElement('div');
                 row.className = 'wd-daily-row';
                 
+                // [修改 1] Grid 佈局重新定義
+                // 原本: 50px 45px 35px 1fr 35px (色條佔滿剩餘空間)
+                // 新版: 50px 85px 1fr 35px minmax(60px, 120px) 35px
+                // 解釋:
+                // - 85px: 加寬圖示欄位給降雨機率放旁邊
+                // - 1fr: 增加一個彈性空白欄位，把溫度區塊往右推
+                // - minmax(60px, 120px): 限制色條的最大寬度為 120px，達到縮小版面的效果
                 row.style.cssText = `
                     display: grid;
-                    grid-template-columns: 50px 45px 35px 1fr 35px;
+                    grid-template-columns: 50px 85px 1fr 35px minmax(60px, 120px) 35px;
                     align-items: center;
                     gap: 5px;
                     padding: 8px 0;
@@ -8506,10 +8509,12 @@ async function fetchAndShowDetail(lat, lon, locName) {
                         <div style="font-weight:700; font-size:0.9rem; color:#374151;">${i===0 ? '今天' : dayName}</div>
                     </div>
 
-                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    <div style="display:flex; flex-direction:row; align-items:center; justify-content:center; gap: 6px;">
                         <div style="width:30px; height:30px;">${iconSvg}</div>
-                        ${popMax > 0 ? `<div style="font-size:0.7rem; color:#60A5FA; font-weight:700; margin-top:-2px;">${popMax}%</div>` : ''}
+                        ${popMax > 0 ? `<div style="font-size:0.8rem; color:#60A5FA; font-weight:700;">${popMax}%</div>` : ''}
                     </div>
+                    
+                    <div></div>
 
                     <div style="text-align:right; font-family:monospace; font-weight:600; color:#9CA3AF; font-size:1rem;">${min}°</div>
 
@@ -8524,7 +8529,6 @@ async function fetchAndShowDetail(lat, lon, locName) {
                             background: linear-gradient(90deg, #34D399, #FBBF24, #F87171);
                             opacity: 0.9;
                         "></div>
-                        
                         ${dotHtml}
                     </div>
 
