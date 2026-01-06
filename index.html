@@ -8438,17 +8438,15 @@ async function fetchAndShowDetail(lat, lon, locName) {
             hourlyContainer.appendChild(item);
         }
 
-        // --- 4. 渲染未來 7 天預報 (iOS 色條升級版) ---
+        // --- 4. 渲染未來 7 天預報 (iOS 色條升級版 + 小白點) ---
             const dailyContainer = document.getElementById('wd-daily-list');
             dailyContainer.innerHTML = '';
 
-            // [新增] 預先計算這 7 天內的「全域最高溫」與「全域最低溫」
-            // 這是繪製色條長度與位置的數學基準 (0% ~ 100%)
             const weeklyMaxVals = data.daily.temperature_2m_max.slice(0, 7);
             const weeklyMinVals = data.daily.temperature_2m_min.slice(0, 7);
             const globalMax = Math.max(...weeklyMaxVals);
             const globalMin = Math.min(...weeklyMinVals);
-            const globalRange = globalMax - globalMin || 1; // 避免分母為 0
+            const globalRange = globalMax - globalMin || 1;
 
             for (let i = 0; i < 7; i++) {
                 const dateStr = data.daily.time[i].slice(5).replace('-', '/');
@@ -8456,24 +8454,44 @@ async function fetchAndShowDetail(lat, lon, locName) {
                 const min = Math.round(data.daily.temperature_2m_min[i]);
                 const code = data.daily.weathercode[i];
                 const popMax = data.daily.precipitation_probability_max[i];
-                // 取得原本的圖示 (保留您的 SVG 邏輯)
                 const iconSvg = getSimpleIconSvg(code, popMax, `d${i}`, false);
                 
                 const dateObj = new Date(data.daily.time[i]);
                 const dayNames = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
                 const dayName = dayNames[dateObj.getDay()];
 
-                // [核心] 計算色條的幾何參數
-                // 1. 左邊留白百分比 = (當日低溫 - 全域最低) / 全域溫差
+                // 計算色條位置
                 const leftPercent = ((min - globalMin) / globalRange) * 100;
-                // 2. 色條寬度百分比 = (當日高溫 - 當日低溫) / 全域溫差
                 const widthPercent = ((max - min) / globalRange) * 100;
+
+                // [新增] 小白點邏輯：只在今天 (i === 0) 顯示
+                let dotHtml = '';
+                if (i === 0) {
+                    const currentT = data.current_weather.temperature;
+                    // 計算小白點在全域範圍中的位置
+                    const dotPercent = ((currentT - globalMin) / globalRange) * 100;
+                    
+                    // 繪製小白點 (白色圓點 + 陰影)
+                    dotHtml = `
+                        <div style="
+                            position: absolute;
+                            left: ${dotPercent}%;
+                            top: 50%;
+                            transform: translate(-50%, -50%);
+                            width: 10px;
+                            height: 10px;
+                            background: #FFFFFF;
+                            border: 2px solid #374151; /* 深色邊框增加對比 */
+                            border-radius: 50%;
+                            box-shadow: 0 0 3px rgba(0,0,0,0.3);
+                            z-index: 10;
+                        "></div>
+                    `;
+                }
 
                 const row = document.createElement('div');
                 row.className = 'wd-daily-row';
                 
-                // [樣式重寫] 改用 Grid 五欄佈局，對齊更精準
-                // 欄位定義：日期(50px) | 圖示(45px) | 低溫(35px) | 色條(自動填滿) | 高溫(35px)
                 row.style.cssText = `
                     display: grid;
                     grid-template-columns: 50px 45px 35px 1fr 35px;
@@ -8486,7 +8504,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
                 row.innerHTML = `
                     <div style="text-align:center; line-height:1.2;">
                         <div style="font-weight:700; font-size:0.9rem; color:#374151;">${i===0 ? '今天' : dayName}</div>
-                        </div>
+                    </div>
 
                     <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
                         <div style="width:30px; height:30px;">${iconSvg}</div>
@@ -8495,18 +8513,19 @@ async function fetchAndShowDetail(lat, lon, locName) {
 
                     <div style="text-align:right; font-family:monospace; font-weight:600; color:#9CA3AF; font-size:1rem;">${min}°</div>
 
-                    <div style="height: 6px; background: #E5E7EB; border-radius: 10px; position: relative; overflow: hidden; width: 100%;">
+                    <div style="height: 6px; background: #E5E7EB; border-radius: 10px; position: relative; width: 100%;">
                         <div style="
                             position: absolute;
                             top: 0; bottom: 0;
                             left: ${leftPercent}%;
                             width: ${widthPercent}%;
-                            min-width: 6px; /* 確保溫差小時至少看得到一個點 */
+                            min-width: 6px;
                             border-radius: 10px;
-                            /* 漸層色：冷(綠藍) -> 熱(橘紅) */
                             background: linear-gradient(90deg, #34D399, #FBBF24, #F87171);
                             opacity: 0.9;
                         "></div>
+                        
+                        ${dotHtml}
                     </div>
 
                     <div style="text-align:left; font-family:monospace; font-weight:600; color:#374151; font-size:1rem;">${max}°</div>
