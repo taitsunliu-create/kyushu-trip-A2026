@@ -1624,7 +1624,8 @@
 /* 請確認並修改 .weather-detail-scroll 的內容 */
 .weather-detail-scroll {
     display: flex;
-    overflow-x: auto;
+    overflow-x: auto;        /* 關鍵：允許橫向捲動，避免超出紅色邊界 */
+    white-space: nowrap;     /* 建議加入：防止內容被擠壓換行 */
     gap: 15px;
     padding: 10px 0;
     margin-bottom: 15px;
