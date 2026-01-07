@@ -8438,7 +8438,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
             hourlyContainer.appendChild(item);
         }
 
-        // --- 4. 渲染未來 7 天預報 (iOS 色條修正版：固定寬度解決對齊) ---
+        // --- 4. 渲染未來 7 天預報 (iOS 色條完美對齊版：防止重疊) ---
             const dailyContainer = document.getElementById('wd-daily-list');
             dailyContainer.innerHTML = '';
 
@@ -8486,18 +8486,18 @@ async function fetchAndShowDetail(lat, lon, locName) {
                 const row = document.createElement('div');
                 row.className = 'wd-daily-row';
                 
-                // [修改重點] Grid 欄位寬度完全固定，解決對齊問題
-                // 1. 日期: 50px
-                // 2. 圖示+降雨: 90px (加寬確保橫排不換行)
-                // 3. 空白: 1fr (自動填滿中間剩餘空間，把溫度區塊推到最右邊)
-                // 4. 低溫: 40px (固定寬度，確保對齊)
-                // 5. 色條: 100px (固定寬度，符合您想要的縮小範圍，且不再跳動)
-                // 6. 高溫: 40px
+                // [關鍵修改] 調整 Grid 欄位寬度與間距
+                // 1. gap: 4px -> 增加間距，防止小白點或色條碰到字
+                // 2. 欄位微調：
+                //    - 日期 45px (縮小一點)
+                //    - 圖示 85px
+                //    - 低溫/高溫 35px (足夠放2位數)
+                //    - 色條 100px (維持您想要的寬度)
                 row.style.cssText = `
                     display: grid;
-                    grid-template-columns: 50px 90px 1fr 40px 100px 40px;
+                    grid-template-columns: 45px 85px 1fr 35px 100px 35px;
                     align-items: center;
-                    gap: 0px; /* 移除間隙由欄位寬度控制 */
+                    gap: 4px; 
                     padding: 8px 0;
                     border-bottom: 1px solid #f0f0f0;
                 `;
@@ -8507,14 +8507,14 @@ async function fetchAndShowDetail(lat, lon, locName) {
                         <div style="font-weight:700; font-size:0.9rem; color:#374151;">${i===0 ? '今天' : dayName}</div>
                     </div>
 
-                    <div style="display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap: 12px; padding-left: 5px;">
+                    <div style="display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap: 6px; padding-left: 2px;">
                         <div style="width:30px; height:30px; flex-shrink:0;">${iconSvg}</div>
                         ${popMax > 0 ? `<div style="font-size:0.8rem; color:#60A5FA; font-weight:700; white-space:nowrap;">${popMax}%</div>` : ''}
                     </div>
                     
                     <div></div>
 
-                    <div style="text-align:right; font-family:monospace; font-weight:600; color:#9CA3AF; font-size:1rem; padding-right:5px;">${min}°</div>
+                    <div style="text-align:right; font-family:monospace; font-weight:600; color:#9CA3AF; font-size:0.95rem;">${min}°</div>
 
                     <div style="height: 6px; background: #E5E7EB; border-radius: 10px; position: relative; width: 100%;">
                         <div style="
@@ -8530,7 +8530,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
                         ${dotHtml}
                     </div>
 
-                    <div style="text-align:left; font-family:monospace; font-weight:600; color:#374151; font-size:1rem; padding-left:5px;">${max}°</div>
+                    <div style="text-align:left; font-family:monospace; font-weight:600; color:#374151; font-size:0.95rem;">${max}°</div>
                 `;
                 dailyContainer.appendChild(row);
             }
