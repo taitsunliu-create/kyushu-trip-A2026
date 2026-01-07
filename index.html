@@ -8438,7 +8438,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
             hourlyContainer.appendChild(item);
         }
 
-        // --- 4. 渲染未來 7 天預報 (最終完美對齊版：使用 Gap 強制隔離) ---
+        // --- 4. 渲染未來 7 天預報 (絕對隔離版：縮小Bar寬度 + 硬性Gap) ---
             const dailyContainer = document.getElementById('wd-daily-list');
             dailyContainer.innerHTML = '';
 
@@ -8462,6 +8462,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
                 const leftPercent = ((min - globalMin) / globalRange) * 100;
                 const widthPercent = ((max - min) / globalRange) * 100;
 
+                // 小白點邏輯 (維持不變)
                 let dotHtml = '';
                 if (i === 0) {
                     const currentT = data.current_weather.temperature;
@@ -8486,20 +8487,20 @@ async function fetchAndShowDetail(lat, lon, locName) {
                 const row = document.createElement('div');
                 row.className = 'wd-daily-row';
                 
-                // [關鍵修改] Grid 設定
-                // 1. gap: 15px -> 這是「護城河」，強制將數字與色條隔開 15px
-                // 2. 色條欄位寬度: 80px -> 縮小色條，符合您要的範圍
+                // [關鍵修改] 嚴格定義欄位寬度與間距
+                // 1. gap: 12px -> 這就是您的紅線緩衝區。數字與色條之間強制隔開 12px，絕對不會碰到。
+                // 2. 色條欄位: 80px -> 將色條寬度縮小 (原本 100px-130px)，確保它在視覺上更集中，遠離邊界。
                 row.style.cssText = `
                     display: grid;
                     grid-template-columns: 45px 85px 1fr 30px 80px 30px;
                     align-items: center;
-                    gap: 15px; 
+                    gap: 12px; 
                     padding: 8px 0;
                     border-bottom: 1px solid #f0f0f0;
                 `;
 
                 row.innerHTML = `
-                    <div style="text-align:center; gap:0;">
+                    <div style="text-align:center;">
                         <div style="font-weight:700; font-size:0.9rem; color:#374151;">${i===0 ? '今天' : dayName}</div>
                     </div>
 
