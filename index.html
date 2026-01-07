@@ -8438,7 +8438,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
             hourlyContainer.appendChild(item);
         }
 
-        // --- 4. 渲染未來 7 天預報 (iOS 色條絕對安全版：預留小白點溢出空間) ---
+        // --- 4. 渲染未來 7 天預報 (最終修正：強制內縮不碰字) ---
             const dailyContainer = document.getElementById('wd-daily-list');
             dailyContainer.innerHTML = '';
 
@@ -8486,16 +8486,16 @@ async function fetchAndShowDetail(lat, lon, locName) {
                 const row = document.createElement('div');
                 row.className = 'wd-daily-row';
                 
-                // [Grid 修改] 
-                // 1. 色條欄位寬度加大到 130px (為了容納內縮的安全距離)
-                // 2. 移除 gap，完全靠欄位寬度與 padding 控制位置
+                // [關鍵修改] 
+                // 1. 定義欄位：日期(45px) | 圖示(85px) | 彈性空白 | 低溫(35px) | 色條容器(100px) | 高溫(35px)
+                // 2. 透過這層結構，數字跟色條容器是分開的
                 row.style.cssText = `
                     display: grid;
-                    grid-template-columns: 45px 85px 1fr 35px 130px 35px;
+                    grid-template-columns: 45px 85px 1fr 35px 100px 35px;
                     align-items: center;
-                    gap: 0;
                     padding: 8px 0;
                     border-bottom: 1px solid #f0f0f0;
+                    gap: 0; /* 基礎 gap 設為 0，靠內部 margin 控制 */
                 `;
 
                 row.innerHTML = `
@@ -8503,7 +8503,7 @@ async function fetchAndShowDetail(lat, lon, locName) {
                         <div style="font-weight:700; font-size:0.9rem; color:#374151;">${i===0 ? '今天' : dayName}</div>
                     </div>
 
-                    <div style="display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap: 16px; padding-left: 2px;">
+                    <div style="display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap: 12px; padding-left: 2px;">
                         <div style="width:30px; height:30px; flex-shrink:0;">${iconSvg}</div>
                         ${popMax > 0 ? `<div style="font-size:0.8rem; color:#60A5FA; font-weight:700; white-space:nowrap;">${popMax}%</div>` : ''}
                     </div>
@@ -8512,14 +8512,8 @@ async function fetchAndShowDetail(lat, lon, locName) {
 
                     <div style="text-align:right; font-family:monospace; font-weight:600; color:#9CA3AF; font-size:0.95rem;">${min}°</div>
 
-                    <div style="width: 100%; padding: 0 12px; box-sizing: border-box;">
-                        <div style="
-                            height: 6px; 
-                            background: #E5E7EB; 
-                            border-radius: 10px; 
-                            position: relative; 
-                            width: 100%; 
-                        ">
+                    <div style="position: relative; margin: 0 8px;">
+                        <div style="height: 6px; background: #E5E7EB; border-radius: 10px; position: relative; width: 100%;">
                             <div style="
                                 position: absolute;
                                 top: 0; bottom: 0;
